@@ -1,0 +1,74 @@
+:root {
+    --theme-orange: #ef6a36;
+    --theme-white: #ffffff;
+    --theme-gray: #f7f7f7;
+}
+
+.query-box-input {
+    color:#111;
+    background-color: rgb(178, 172, 172);
+    border:none;
+    padding :8px 10px;
+    border-radius:5px;
+    width:300px;
+    font-size:16px;
+
+}
+
+.query-box-button{
+    color:var(--theme-white);
+    background-color: #ef6a36;
+    border:none;
+    padding:10px 15px;
+    border-radius:5px;
+    font-size: 16px;
+    gap: 10px;
+    cursor:pointer;
+    transition: filter 0.2s ease;
+
+}
+.query-box-button:hover{
+    filter: brightness(90%);
+}
+
+.query-box-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    z-index:9999;
+    padding:10px 12px;
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    border-radius:8px;
+    margin: 8px auto 0 auto; /* center inside footer */
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .query-box-container {
+        width: 100%;
+        padding: 8px;
+    }
+
+    .query-box-input {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+    }
+
+    .query-box-button {
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .query-box-input {
+        font-size: 14px;
+    }
+
+    .query-box-button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}

@@ -1,0 +1,34 @@
+.page {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  background-color: #000000;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+body {
+  background-color: #000000;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.main-wrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .page {
+    flex-direction: column;
+  }
+  
+  .main-wrapper {
+    width: 100%;
+    height: 100vh;
+  }
+}
