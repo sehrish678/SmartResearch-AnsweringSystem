@@ -18,9 +18,12 @@ body {
 
 .main-wrapper {
   flex: 1;
-  overflow: hidden;
-  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
 }
+
 
 @media (max-width: 768px) {
   .page {

@@ -49,3 +49,15 @@
     padding-top: 210px;
 }
 
+@media (max-width: 768px) {
+  .navbar {
+    width: 100%;
+    height: auto;
+  }
+}
+@media (max-width: 480px) {
+  .nav-list {
+    flex-direction: row;
+    justify-content: space-around;
+  }
+}

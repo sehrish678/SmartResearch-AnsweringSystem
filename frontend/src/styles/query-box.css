@@ -41,34 +41,4 @@
     box-shadow: 0 6px 12px rgba(0,0,0,0.08);
     border-radius:8px;
     margin: 8px auto 0 auto; /* center inside footer */
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-@media (max-width: 768px) {
-    .query-box-container {
-        width: 100%;
-        padding: 8px;
-    }
-
-    .query-box-input {
-        flex: 1;
-        width: auto;
-        min-width: 0;
-    }
-
-    .query-box-button {
-        white-space: nowrap;
-    }
-}
-
-@media (max-width: 480px) {
-    .query-box-input {
-        font-size: 14px;
-    }
-
-    .query-box-button {
-        padding: 8px 12px;
-        font-size: 14px;
-    }
 }
