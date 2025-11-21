@@ -12,7 +12,7 @@ export function NavBar() {
       <div className="logo"><img src="icon.png" alt="icon" />
       <h3>Smart Research & Answering System</h3></div>
       <ul className="nav-list">
-        <motion.li whileHover={{ scale: 1.1 }} onClick={()=>window.location.reload()}>New Chat</motion.li>
+        <motion.li  style={{ cursor: "pointer" }} whileHover={{ scale: 1.1 }} onClick={()=>window.location.reload()}>New Chat</motion.li>
         {/* <motion.li whileHover={{ scale: 1.1 }}>About</motion.li>
         <motion.li whileHover={{ scale: 1.1 }}>Help</motion.li> */}
       </ul>
