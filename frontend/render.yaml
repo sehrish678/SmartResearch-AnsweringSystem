@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: smart-research-frontend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://your-backend-url.onrender.com  //will change this to what maryyam will give me the url of backend
