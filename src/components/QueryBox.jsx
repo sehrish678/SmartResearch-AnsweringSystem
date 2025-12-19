@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiPlus, FiSearch, FiX, FiArrowUp } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiX, FiArrowUp, FiMic, FiMicOff } from 'react-icons/fi';
 import { MdOutlineFileUpload } from 'react-icons/md';
 import '../styles/query-box.css';
 
@@ -7,9 +7,53 @@ export function QueryBox({ onSend }) {
   const [query, setQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeepSearch, setIsDeepSearch] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState(null);
   const inputRef = useRef(null);
   const menuRef = useRef(null);
   const containerRef = useRef(null);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      
+      recognitionInstance.continuous = true;
+      recognitionInstance.interimResults = true;
+      recognitionInstance.lang = 'en-US';
+
+      recognitionInstance.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        setQuery(prev => {
+          const newText = finalTranscript || interimTranscript;
+          return prev + newText;
+        });
+      };
+
+      recognitionInstance.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+
+      setRecognition(recognitionInstance);
+    }
+  }, []);
 
   const handleChange = (e) => {
     setQuery(e.target.value);
@@ -21,6 +65,22 @@ export function QueryBox({ onSend }) {
       onSend(text, isDeepSearch ? 'deep' : 'simple');
       setQuery('');
       setIsDeepSearch(false);
+    }
+  };
+
+  const toggleVoiceInput = () => {
+    if (!recognition) {
+      alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+    } else {
+      setQuery(''); // Clear previous text
+      recognition.start();
+      setIsListening(true);
     }
   };
 
@@ -99,6 +159,15 @@ export function QueryBox({ onSend }) {
               </div>
             </div>
           )}
+
+          {isListening && (
+            <div className="search-options">
+              <div className="listening-capsule">
+                <span className="listening-dot"></span>
+                <span>Listening...</span>
+              </div>
+            </div>
+          )}
           
           <textarea
             ref={inputRef}
@@ -114,6 +183,15 @@ export function QueryBox({ onSend }) {
             rows={query ? Math.min(Math.ceil(query.length / 50), 5) : 1}
           />
         </div>
+
+        {/* Voice Input Button */}
+        <button 
+          className={`voice-button ${isListening ? 'listening' : ''}`}
+          onClick={toggleVoiceInput}
+          title={isListening ? "Stop listening" : "Voice input"}
+        >
+          {isListening ? <FiMicOff size={18} /> : <FiMic size={18} />}
+        </button>
 
         {/* Send Button - Right Side */}
         {(query || isDeepSearch) && (

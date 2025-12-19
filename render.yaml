@@ -7,4 +7,4 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        value: https://your-backend-url.onrender.com  //will change this to what maryyam will give me the url of backend
+        value: https://smart-research-answering-backend.up.railway.app  //will change this to what maryyam will give me the url of backend

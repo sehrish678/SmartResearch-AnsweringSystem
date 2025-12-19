@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import '../styles/conversation.css';
 import { QueryBox } from './QueryBox.jsx';
 import { ChatContext } from './ChatContext.jsx';
+// import { API_BASE_URL } from './config.js';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export function Conversation() {
   const { messages, setMessages } = useContext(ChatContext);
@@ -33,21 +35,19 @@ export function Conversation() {
         return;
       }
 
-      const response = await fetch('http://localhost:8000/answer', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ query: text, mode: mode })
-      });
+    const response = await fetch(`${API_BASE_URL}/answer`, {
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({ query: text, mode: mode })
+});
 
       const data = await response.json();
 
-      // Handle both simple (reference) and deep (references) modes
       let sourceContent;
       if (mode === 'deep' && data.references && Array.isArray(data.references)) {
-        // Deep mode: show all references like simple mode (blue, small font)
         sourceContent = (
           <div className="references-list">
             {data.references.map((ref, idx) => (
