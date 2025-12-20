@@ -1,10 +1,52 @@
+/* Conversation UI styles - cleaned, deduplicated, and theme-safe */
+
+/* Color variables - keep palette unchanged, override for dark theme below */
+:root {
+  --bg: #ffffff;
+  --panel-bg: #ffffff;
+  --text: #202124;
+  --muted: #70757a;
+  --muted-weak: #9ca3af;
+  --accent: #ef6a36;
+  --card-bg: #f7f7f7;
+  --card-border: #e5e5e5;
+  --user-msg-bg: #d9e1e1;
+  --bot-msg-bg: #f7f7f7;
+  --source-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --source-gradient-alt: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --source-text-light: #2061bc;
+  --source-text-dark: #ffffff;
+  --shadow: 0 4px 12px rgba(239, 106, 54, 0.2);
+  --max-message-width: 70%;
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Dark theme overrides (keeps same accent colors) */
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --panel-bg: transparent;
+  --text: #ffffff;
+  --muted: #d1d5db;
+  --muted-weak: #d1d5db;
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --user-msg-bg: rgba(239, 106, 54, 0.3);
+  --bot-msg-bg: rgba(255, 255, 255, 0.05);
+  --source-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --source-gradient-alt: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --source-text-light: #ffffff;
+}
+
+/* Layout */
 .conversation {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: var(--bg);
   overflow: hidden;
+  font-family: var(--font-family);
+  color: var(--text);
 }
 
 .chat-panel {
@@ -15,6 +57,7 @@
   flex-direction: column;
   padding: 20px;
   box-sizing: border-box;
+  background: var(--panel-bg);
 }
 
 .welcome-container {
@@ -42,7 +85,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 4px 12px rgba(239, 106, 54, 0.2));
+  filter: var(--shadow);
 }
 
 .bot-character svg {
@@ -51,6 +94,7 @@
   max-width: 100%;
 }
 
+/* Typography */
 .welcome-text {
   display: flex;
   flex-direction: column;
@@ -61,18 +105,19 @@
 .welcome-text h2 {
   font-size: 28px;
   font-weight: 700;
-  color: #202124;
+  color: var(--text);
   margin: 0;
   letter-spacing: -0.5px;
 }
 
 .welcome-text p {
   font-size: 14px;
-  color: #70757a;
+  color: var(--muted);
   margin: 0;
   line-height: 1.6;
 }
 
+/* Feature cards */
 .feature-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -83,9 +128,9 @@
 
 .feature-card {
   padding: 16px 12px;
-  background: #f7f7f7;
+  background: var(--card-bg);
   border-radius: 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--card-border);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -95,7 +140,7 @@
 }
 
 .feature-card:hover {
-  border-color: #ef6a36;
+  border-color: var(--accent);
   background: rgba(239, 106, 54, 0.05);
 }
 
@@ -106,98 +151,153 @@
 .feature-card h4 {
   font-size: 13px;
   font-weight: 600;
-  color: #202124;
+  color: var(--text);
   margin: 0;
 }
 
 .feature-card p {
   font-size: 11px;
-  color: #70757a;
+  color: var(--muted);
   margin: 0;
   text-align: center;
 }
 
 .start-text {
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--muted-weak);
   font-weight: 500;
   margin-top: 10px;
 }
 
+/* Messages */
 .message {
-  max-width: 70%;
+  max-width: var(--max-message-width);
   padding: 10px 12px;
   margin: 8px 0;
   border-radius: 12px;
   line-height: 1.6;
   box-sizing: border-box;
   font-size: 15px;
-  color: #202124;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--text);
+  font-family: var(--font-family);
   word-wrap: break-word;
 }
 
 .message.user {
-  background: #d9e1e1;
+  background: var(--user-msg-bg);
   align-self: flex-end;
   text-align: right;
+  color: var(--text);
 }
 
 .message.bot {
-  background: #f7f7f7;
+  background: var(--bot-msg-bg);
   align-self: flex-start;
   text-align: left;
+  color: var(--text);
 }
 
+/* Message inner wrapper for spacing/line-height */
+.message-text {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+/* Correction box (single definition) */
 .correction-box {
-  font-size: 14px;
-  color: #70757a;
+  background: #f8f9fa;
+  border-left: 3px solid #1a73e8;
+  padding: 8px 12px;
   margin-bottom: 12px;
-  font-style: italic;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #5f6368;
 }
 
 .did-you-mean {
   font-size: 12px;
   font-weight: 700;
-  color: #a50a0a;
+  color: #a50a0a; /* kept red emphasis used previously */
   display: block;
   margin-bottom: 6px;
 }
 
 .corrected-query {
-  color: #57606e;
+  color: #1a73e8;
   font-weight: 500;
   font-style: italic;
+  margin-left: 4px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.corrected-query:hover {
+  color: #1557b0;
+  text-decoration: underline;
 }
 
 .source-link {
   margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid #e0e0e0;
-  font-size: 12px;
-  color: #666666;
+  padding: 0;                      /* no heavy padding */
+  background: transparent;         /* remove previous gradient/background */
+  border-radius: 0;
   display: flex;
-  gap: 6px;
-  font-weight: bold;
   align-items: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  gap: 8px;
+  transition: none;
+  box-shadow: none;
+  font-size: 13px;
+  color: var(--muted);             /* muted grey text for the label / description */
+  line-height: 1.4;
 }
 
+/* Label (e.g. "📚 Source:") — muted and slightly bolder */
+.source-label {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* The link itself: plain, blue, no background, improved readability */
 .source-text {
-  color: #2061bc;
-  text-decoration: none;
+  color: var(--source-text-light); /* blue link color (keeps your existing var) */
+  text-decoration: none;           /* no background or card look */
+  font-size: 13px;
   font-weight: 500;
+  font-style: normal;              /* use normal or italic per preference */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
   cursor: pointer;
-  transition: all 0.2s;
-  font-style: italic;
 }
 
-.source-text:hover {
+/* Hover / focus states: underline on hover and slightly darker blue for affordance */
+.source-text:hover,
+.source-text:focus {
   text-decoration: underline;
-  color: #202124;
+  color: darken(var(--source-text-light), 6%); /* fallback handled below for browsers without `darken` */
+  outline: none;
 }
 
+/* Fallback for the hover color if `darken()` is not available: target a specific hex */
+.source-text:hover,
+.source-text:focus { color: #184e8a; }
+
+/* If the link URL needs to wrap on small screens, allow wrapping while keeping readable spacing */
+@media (max-width: 480px) {
+  .source-link {
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .source-text {
+    white-space: normal;
+    display: inline-block;
+  }
+}
+/* Typing indicator */
 .typing-indicator {
   display: flex;
   align-items: center;
@@ -209,134 +309,24 @@
   height: 10px;
   width: 10px;
   margin: 0 3px;
-  background-color: #ef6a36;
+  background-color: var(--accent);
   border-radius: 50%;
   display: inline-block;
   animation: typing 1s infinite ease-in-out;
 }
 
-.typing-indicator span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
-}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes typing {
-  0%, 80%, 100% {
-    transform: scale(0);
-    opacity: 0.5;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
 }
 
-/* .footer {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 0px;
-  box-sizing: border-box;
-  background: #ffffff;
-  border-top: 1px solid #e5e5e5;
-  flex-shrink: 0;
-} */
-
-/* Dark Theme */
-[data-theme="dark"] .conversation {
-  background: #1a1a1a;
-}
-
-[data-theme="dark"] .chat-panel {
-  background: transparent;
-}
-
-[data-theme="dark"] .welcome-text h2,
-[data-theme="dark"] .feature-card h4 {
-  color: #fff;
-}
-
-[data-theme="dark"] .welcome-text p,
-[data-theme="dark"] .feature-card p,
-[data-theme="dark"] .start-text {
-  color: #d1d5db;
-}
-
-[data-theme="dark"] .feature-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .feature-card:hover {
-  background: rgba(239, 106, 54, 0.1);
-  border-color: #ef6a36;
-}
-
-[data-theme="dark"] .message.bot {
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-}
-
-[data-theme="dark"] .message.user {
-  background: rgba(239, 106, 54, 0.3);
-  color: #fff;
-}
-
-[data-theme="dark"] .footer {
-  background: #1a1a1a;
-  border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .welcome-text h2 {
-    font-size: 24px;
-  }
-
-  .message {
-    max-width: 85%;
-    font-size: 14px;
-  }
-
-  .feature-cards {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .chat-panel {
-    padding: 12px;
-  }
-
-  .welcome-text h2 {
-    font-size: 20px;
-  }
-
-  .welcome-text p {
-    font-size: 13px;
-  }
-
-  .message {
-    max-width: 90%;
-    font-size: 13px;
-    padding: 8px 10px;
-  }
-
-  .footer {
-    padding: 0px;
-  }
-
-  .bot-character svg {
-    width: 80px;
-    height: 80px;
-  }
-}
+/* Conclusion & references highlights (single definitions) */
 .conclusion-highlight {
   background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-  border-left: 4px solid #ef6a36;
+  border-left: 4px solid var(--accent);
   padding: 16px;
   margin: 16px 0;
   border-radius: 8px;
@@ -345,7 +335,70 @@
 }
 
 .conclusion-highlight strong {
-  color: #ef6a36;
+  color: var(--accent);
   display: block;
   margin-bottom: 8px;
+}
+
+.references-highlight {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #a8e6cf 0%, #56ab91 100%);
+  border-left: 4px solid #56ab91;
+  border-radius: 6px;
+  color: #1e3a32;
+}
+
+.references-highlight strong {
+  display: block;
+  margin-bottom: 12px;
+  color: #2d5f4e;
+  font-size: 15px;
+}
+
+.references-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.references-list-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.references-list-items li {
+  padding: 8px 0;
+  padding-left: 20px;
+  position: relative;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  line-height: 1.5;
+}
+
+.references-list-items li:last-child { border-bottom: none; }
+
+.references-list-items li:before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #2d5f4e;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .welcome-text h2 { font-size: 24px; }
+  .message { max-width: 85%; font-size: 14px; }
+  .feature-cards { max-width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .chat-panel { padding: 12px; }
+  .welcome-text h2 { font-size: 20px; }
+  .welcome-text p { font-size: 13px; }
+  .message { max-width: 90%; font-size: 13px; padding: 8px 10px; }
+  .bot-character svg { width: 80px; height: 80px; }
 }

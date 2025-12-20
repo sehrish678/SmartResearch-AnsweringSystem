@@ -88,8 +88,6 @@ export function QueryBox({ onSend }) {
     setIsMenuOpen(false);
     if (option === 'deep') {
       setIsDeepSearch(!isDeepSearch);
-    } else if (option === 'upload') {
-      console.log('Upload file');
     }
   };
 
@@ -131,13 +129,7 @@ export function QueryBox({ onSend }) {
                 <FiSearch size={18} />
                 <span>Deep Search</span>
               </button>
-              <button 
-                className="menu-item"
-                onClick={() => handleMenuClick('upload')}
-              >
-                <MdOutlineFileUpload size={18} />
-                <span>Upload File</span>
-              </button>
+           
             </div>
           )}
         </div>

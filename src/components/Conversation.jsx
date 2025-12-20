@@ -1,111 +1,184 @@
-import { useState, useEffect, useRef,useContext } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { motion } from 'framer-motion';
 import '../styles/conversation.css';
 import { QueryBox } from './QueryBox.jsx';
 import { ChatContext } from './ChatContext.jsx';
-// import { API_BASE_URL } from './config.js';
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { TypewriterText } from './TypewriterText.jsx';
+import { extractSourcesFromText } from '../utils/utils.js';
+
+const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/mcp';
 
 export function Conversation() {
-  const { messages, setMessages } = useContext(ChatContext);
+  const { messages, setMessages, currentSessionId, loadChatSessions } = useContext(ChatContext);
   const [showWelcome, setShowWelcome] = useState(true);
   const chatPanelRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  async function handleSendQuery(raw, mode = 'simple') {
-    const text = raw.trim();
-    if (!text) return;
 
-    setShowWelcome(false);
-    const userMsg = { id: Date.now(), sender: 'user', text };
-    setMessages(prev => [...prev, userMsg]);
-    setIsLoading(true);
 
-    try {
-      const token = localStorage.getItem('token');
+async function handleSendQuery(raw, mode = 'simple') {
+  const text = raw.trim();
+  if (!text) return;
 
-      if (!token) {
-        const botMsg = {
-          id: Date.now() + 1,
-          sender: 'bot',
-          text: 'Error! No token found. Please login again.'
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Please set your token in localStorage');
+    return;
+  }
+
+  setShowWelcome(false);
+  const userMsg = { id: Date.now(), sender: 'user', text };
+  setMessages(prev => [...prev, userMsg]);
+  setIsLoading(true);
+
+  try {
+    // Build params depending on whether there's an active session
+    const params = currentSessionId
+      ? {
+          name: "smart_send_message",
+          arguments: {
+            token,
+            session_id: currentSessionId,
+            message: text,
+            mode
+          }
+        }
+      : {
+          name: "smart_message_query",
+          arguments: {
+            token,
+            question: text,
+            mode
+          }
         };
-        setMessages(prev => [...prev, botMsg]);
-        setIsLoading(false);
-        return;
+
+    console.debug('Sending query with params:', params);
+
+    const response = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params,
+        id: 1
+      })
+    });
+
+    if (!response.ok) {
+      const textBody = await response.text().catch(() => '');
+      console.error('Server responded with non-OK status:', response.status, textBody);
+      throw new Error('Server error: ' + response.status);
+    }
+
+    const rawData = await response.json();
+    console.debug('Raw API response data:', rawData, { status: response.status });
+
+    // Robust MCP parsing: handle result.content[0].text (stringified JSON) or direct result
+    let parsed = rawData?.result ?? null;
+
+    if (parsed?.content?.[0]?.text) {
+      try {
+        parsed = JSON.parse(parsed.content[0].text);
+      } catch (e) {
+        parsed = parsed.content[0].text;
       }
+    }
 
-    const response = await fetch(`${API_BASE_URL}/answer`, {
-  method: 'POST',
-  headers: { 
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  },
-  body: JSON.stringify({ query: text, mode: mode })
-});
+    // If parsed is an array, pick the last element (common variant)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      parsed = parsed[parsed.length - 1];
+    }
 
-      const data = await response.json();
+    console.debug('Normalized parsed result:', parsed);
 
-      let sourceContent;
-      if (mode === 'deep' && data.references && Array.isArray(data.references)) {
+    // Extract answer text robustly
+    const answerTextRaw =
+      (parsed && (parsed.answer ?? parsed.text ?? parsed.content)) ||
+      (typeof parsed === 'string' ? parsed : '') ||
+      'No answer returned';
+
+    // Find references in common keys (references, sources, refs, reference)
+    let refs =
+      parsed?.references ||
+      parsed?.sources ||
+      parsed?.refs ||
+      null;
+
+    if ((!refs || (Array.isArray(refs) && refs.length === 0)) && parsed?.reference) {
+      refs = [parsed.reference];
+    }
+
+    // Fallback: extract from answer text if no structured refs found
+    if ((!refs || (Array.isArray(refs) && refs.length === 0)) && typeof answerTextRaw === 'string') {
+      const extracted = extractSourcesFromText(answerTextRaw);
+      if (extracted.length) refs = extracted;
+    }
+
+    // Build sourceContent if refs exist (show for deep mode primarily, but also if present)
+    let sourceContent = null;
+    if (refs) {
+      const refsArray = Array.isArray(refs) ? refs : [refs];
+      if (refsArray.length > 0) {
         sourceContent = (
           <div className="references-list">
-            {data.references.map((ref, idx) => (
+            {refsArray.map((ref, idx) => (
               <div key={idx} className="source-link">
-                <span>Source {idx + 1}:</span>
-                <a href="#" className="source-text">{ref}</a>
+                <span className="source-label">📚 Source {idx + 1}:</span>
+                <a href={ref} target="_blank" rel="noopener noreferrer" className="source-text">
+                  {ref}
+                </a>
               </div>
             ))}
           </div>
         );
-      } else {
-        // Simple mode: show single reference
-        sourceContent = data.reference ? (
-          <div className="source-link">
-            <span>Source:</span>
-            <a href="#" className="source-text">{data.reference}</a>
-          </div>
-        ) : null;
       }
-
-      // Highlight conclusion in deep mode
-      let answerText = data.answer;
-      if (mode === 'deep' && data.answer.includes('Conclusion:')) {
-        const parts = data.answer.split('Conclusion:');
-        answerText = (
-          <>
-            {parts[0]}
-            <div className="conclusion-highlight">
-              <strong>📌 Conclusion:</strong>
-              {parts[1]}
-            </div>
-          </>
-        );
-      }
-
-      const botMsg = { 
-        id: Date.now() + 1, 
-        sender: 'bot', 
-        text: answerText,
-        original_query: data.original_query,
-        corrected_query: data.corrected_query,
-        was_corrected: data.original_query !== data.corrected_query,
-        mode: mode,
-        sourceContent: sourceContent
-      };
-      setMessages(prev => [...prev, botMsg]);
-    } catch (error) {
-      const botMsg = {
-        id: Date.now() + 1,
-        sender: 'bot',
-        text: 'Error! Is backend running?'
-      };
-      setMessages(prev => [...prev, botMsg]);
-    } finally {
-      setIsLoading(false);
     }
-  }
 
+    // Highlight conclusion in deep mode if present and safe to inspect
+    let displayedAnswer = answerTextRaw;
+    if (mode === 'deep' && typeof answerTextRaw === 'string' && answerTextRaw.includes('Conclusion:')) {
+      const parts = answerTextRaw.split(/Conclusion:\s*/i);
+      displayedAnswer = (
+        <>
+          {parts[0]}
+          <div className="conclusion-highlight">
+            <strong>📌 Conclusion:</strong>
+            {parts.slice(1).join('').trim()}
+          </div>
+        </>
+      );
+    }
+
+    // Build bot message object
+    const botMsg = {
+      id: Date.now() + 1,
+      sender: 'bot',
+      text: displayedAnswer,
+      original_query: parsed?.original_query ?? parsed?.query ?? null,
+      corrected_query: parsed?.corrected_query ?? parsed?.corrected ?? null,
+      was_corrected:
+        typeof parsed?.original_query === 'string' &&
+        typeof parsed?.corrected_query === 'string' &&
+        parsed.original_query !== parsed.corrected_query,
+      mode,
+      sourceContent
+    };
+
+    setMessages(prev => [...prev, botMsg]);
+
+    // if (parsed?.session_id) await loadChatSessions();
+
+  } catch (error) {
+    console.error('Error in handleSendQuery:', error);
+    setMessages(prev => [
+      ...prev,
+      { id: Date.now() + 1, sender: 'bot', text: 'Error! Could not connect to backend.' }
+    ]);
+  } finally {
+    setIsLoading(false);
+  }
+}
   const scrollToBottom = () => {
     if (chatPanelRef.current) {
       const { scrollHeight, clientHeight } = chatPanelRef.current;
@@ -230,8 +303,8 @@ export function Conversation() {
           </motion.div>
         )}
 
-        {/* Messages */}
-        {messages.map(m => (
+       {/* Messages */}
+        {messages.map((m, idx) => (
           <motion.div 
             key={m.id} 
             className={`message ${m.sender}`}
@@ -241,11 +314,17 @@ export function Conversation() {
           >
             {m.was_corrected && (
               <div className="correction-box">
-                <span className="did-you-mean">Did you mean?</span>
-                <div className="corrected-query">"{m.corrected_query}"</div>
+                <span className="did-you-mean">Did you mean: </span>
+                <span className="corrected-query">"{m.corrected_query}"</span>
               </div>
             )}
-            {m.text}
+            <div className="message-text">
+              {m.sender === 'bot' && idx === messages.length - 1 ? (
+                <TypewriterText text={typeof m.text === 'string' ? m.text : ''} />
+              ) : (
+                m.text
+              )}
+            </div>
             {m.sourceContent}
           </motion.div>
         ))}

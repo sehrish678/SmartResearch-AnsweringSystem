@@ -20,18 +20,14 @@ export function TypewriterText({ text, color }) {
       duration: 2,
       text: text,
       ease: "none",
-      delay: 0.5
+      delay: 0.8
     });
   }, [text]); // Re-run if text changes
 
   return (
-    <h2 
+    <p
       ref={textRef} 
-      style={{ 
-        color: color,
-        textAlign: 'center',
-        minHeight: '2em', // Prevent layout shift during animation
-      }}
+      style={{ color: color || 'inherit', whiteSpace: 'pre-wrap' }}
     />
   );
 }
