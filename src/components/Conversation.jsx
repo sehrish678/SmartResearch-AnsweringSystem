@@ -195,7 +195,7 @@ export function Conversation() {
               {/* Animated Bot Character */}
               <motion.div
                 className="bot-character"
-                animate={{ y: [0, -20, 0] }}
+                animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
                 <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
@@ -283,7 +283,7 @@ export function Conversation() {
             {m.was_corrected && (
               <div className="correction-box">
                 <span className="did-you-mean">Did you mean: </span>
-                <TypewriterText text={`"${m.corrected_query}"`} /> {/* Progressive reveal */}
+                <TypewriterText text={`"${m.corrected_query}"`} /> 
               </div>
             )}
             <div className="message-text">
