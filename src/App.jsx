@@ -1,21 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ChatProvider } from './components/ChatContext.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import './App.css';
-import NavBar  from './components/NavBar.jsx';
+import NavBar from './components/NavBar.jsx';
 import { Conversation } from './components/Conversation.jsx';
 
 // Dashboard Component
-function Dashboard({ isSidebarOpen, toggleSidebar }) {
+function Dashboard({ isSidebarOpen, toggleSidebar, closeSidebar }) {
   return (
     <div className="page">
-      <button className="menu-toggle" onClick={toggleSidebar}>
-        Menu
+      <button className="menu-toggle" onClick={toggleSidebar} aria-label="Toggle menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
       </button>
+
+      {/* Overlay */}
+      <div 
+        className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`}
+        onClick={closeSidebar}
+        aria-hidden="true"
+      />
+
+      {/* Sidebar */}
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <NavBar />
       </aside>
+
+      {/* Main Content */}
       <div className="main-wrapper">
         <Conversation />
       </div>
@@ -26,7 +41,37 @@ function Dashboard({ isSidebarOpen, toggleSidebar }) {
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => {
+      const newState = !prev;
+      if (newState) {
+        document.body.classList.add('sidebar-open');
+      } else {
+        document.body.classList.remove('sidebar-open');
+      }
+      return newState;
+    });
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+    document.body.classList.remove('sidebar-open');
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768 && isSidebarOpen) {
+        closeSidebar();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isSidebarOpen]);
+
+  useEffect(() => {
+    closeSidebar();
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -39,10 +84,10 @@ export default function App() {
                 <Dashboard
                   isSidebarOpen={isSidebarOpen}
                   toggleSidebar={toggleSidebar}
+                  closeSidebar={closeSidebar}
                 />
               }
             />
-            {/* Redirect everything else to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ChatProvider>

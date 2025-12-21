@@ -20,9 +20,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 30px 20px 20px;
+  padding: 40px 20px 24px;
   border-bottom: 1px solid rgba(239, 106, 54, 0.2);
-  gap: 12px;
+  gap: 14px;
   cursor: pointer;
   transition: background 0.3s ease;
   flex-shrink: 0;
@@ -47,7 +47,7 @@
 .logo:hover {
   background: rgba(239, 106, 54, 0.2);
   border-color: #ef6a36;
-  transform: rotate(5deg);
+  transform: rotate(5deg) scale(1.05);
 }
 
 .logo-icon {
@@ -123,6 +123,7 @@
 .nav-item.new-chat-btn:hover {
   background: #f07a46;
   box-shadow: 0 4px 12px rgba(239, 106, 54, 0.4);
+  transform: translateY(-1px);
 }
 
 .nav-icon {
@@ -307,6 +308,7 @@
 .logout-btn:hover {
   background: linear-gradient(135deg, #ff7a46, #f56a2e);
   box-shadow: 0 4px 12px rgba(239, 106, 54, 0.3);
+  transform: translateY(-2px);
 }
 
 .logout-btn:active {
@@ -403,21 +405,22 @@
 /* Tablet View */
 @media (max-width: 768px) {
   .navbar {
-    width: 280px;
-    max-width: 80vw;
+    width: calc(100vw - 80px);
+    max-width: 320px;
+    border-radius: 0 16px 16px 0;
   }
 
   .logo-section {
-    padding: 20px 16px 16px;
+    padding: 24px 16px 18px;
   }
 
   .logo {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
   }
 
   .logo-icon {
-    font-size: 28px;
+    font-size: 30px;
   }
 
   .logo-text {
@@ -429,7 +432,7 @@
   }
 
   .nav-item {
-    padding: 10px 14px;
+    padding: 11px 14px;
     font-size: 13px;
   }
 
@@ -438,12 +441,12 @@
   }
 
   .history-item {
-    padding: 10px 14px;
+    padding: 11px 14px;
   }
 
   .logout-btn {
     margin: 10px;
-    padding: 10px 14px;
+    padding: 11px 14px;
     font-size: 13px;
   }
 
@@ -455,38 +458,34 @@
 /* Mobile View */
 @media (max-width: 480px) {
   .navbar {
-    width: 100%;
+    width: calc(100vw - 60px);
     max-width: 100%;
+    border-radius: 0 12px 12px 0;
   }
 
   .logo-section {
-    padding: 16px 12px 12px;
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
+    padding: 20px 14px 16px;
   }
 
   .logo {
-    width: 50px;
-    height: 50px;
+    width: 56px;
+    height: 56px;
   }
 
   .logo-icon {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .logo-text {
-    font-size: 16px;
-    text-align: left;
+    font-size: 15px;
   }
 
   .logo-subtitle {
     font-size: 11px;
-    text-align: left;
   }
 
   .nav-content {
-    padding: 12px 8px;
+    padding: 14px 10px;
     gap: 6px;
   }
 
@@ -501,11 +500,11 @@
   }
 
   .chat-history-section {
-    padding: 8px 0;
+    padding: 10px 0;
   }
 
   .history-title {
-    padding: 6px 12px;
+    padding: 8px 12px;
     font-size: 10px;
   }
 
@@ -522,13 +521,13 @@
   }
 
   .logout-btn {
-    margin: 8px;
+    margin: 10px;
     padding: 10px 12px;
     font-size: 14px;
   }
 
   .nav-footer {
-    padding: 10px 8px;
+    padding: 12px 10px;
   }
 
   .nav-footer p {
@@ -539,16 +538,16 @@
 /* Small Mobile View */
 @media (max-width: 360px) {
   .logo-section {
-    padding: 12px 10px;
+    padding: 18px 12px 14px;
   }
 
   .logo {
-    width: 45px;
-    height: 45px;
+    width: 52px;
+    height: 52px;
   }
 
   .logo-icon {
-    font-size: 22px;
+    font-size: 24px;
   }
 
   .logo-text {
@@ -560,7 +559,7 @@
   }
 
   .nav-item {
-    padding: 8px 10px;
+    padding: 9px 10px;
     font-size: 13px;
     gap: 10px;
   }
