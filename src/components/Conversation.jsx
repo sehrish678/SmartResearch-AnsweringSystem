@@ -265,7 +265,7 @@ export function Conversation() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1, duration: 0.5 }}
               >
-                <p>Start typing below to begin!</p>
+                {/* <p>Start typing below to begin!</p> */}
               </motion.div>
             </motion.div>
           </motion.div>
