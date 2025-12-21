@@ -1,12 +1,12 @@
 /* Main Navbar */
 .navbar {
   background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
-  height: 100vh;
-  width: 250px;
+  height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(239, 106, 54, 0.2);
-  box-shadow: 2px 0 12px rgba(239, 106, 54, 0.1);
+  border-right: none;
+  box-shadow: none;
   transition: all 0.3s ease;
   overflow-y: auto;
   overflow-x: hidden;
@@ -14,15 +14,14 @@
   position: relative;
 }
 
-/* ============ LOGO SECTION ============ */
 .logo-section {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px 24px;
+  padding: 20px 20px 16px;
   border-bottom: 1px solid rgba(239, 106, 54, 0.2);
-  gap: 14px;
+  gap: 10px;
   cursor: pointer;
   transition: background 0.3s ease;
   flex-shrink: 0;
@@ -33,9 +32,9 @@
 }
 
 .logo {
-  width: 70px;
-  height: 70px;
-  border-radius: 12px;
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
   background: rgba(239, 106, 54, 0.1);
   border: 2px solid rgba(239, 106, 54, 0.3);
   display: flex;
@@ -51,13 +50,13 @@
 }
 
 .logo-icon {
-  font-size: 32px;
+  font-size: 28px;
   filter: brightness(1.1);
 }
 
 .logo-text {
   color: #ef6a36;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   margin: 0;
   letter-spacing: 0.5px;
@@ -65,12 +64,55 @@
 
 .logo-subtitle {
   color: #9ca3af;
-  font-size: 12px;
+  font-size: 11px;
   margin: 0;
   font-weight: 500;
   letter-spacing: 0.3px;
 }
+.logo-image-wrapper {
+  width: 60px;
+  height: 60px;
+  background-color: black; /* White background */
+  border-radius: 12px;
+  display: flex;
+  animation: pulse-glow 2s infinite ease-in-out;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(174, 82, 32, 0.1); /* Subtle shadow for depth */
+  border: 1px solid #000000;
+}
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 15px rgba(239, 106, 54, 0.7),
+      0 0 25px rgba(239, 106, 54, 0.5),
+      0 0 40px rgba(239, 106, 54, 0.3);
+  }
+  50% {
+    box-shadow: 
+      0 0 25px rgba(239, 106, 54, 1),
+      0 0 35px rgba(239, 106, 54, 0.7),
+      0 0 50px rgba(239, 106, 54, 0.4);
+  }
+}
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Keeps bulb icon proportional */
+}
 
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Optional: Glow on hover */
+.logo-image-wrapper:hover {
+  box-shadow: 0 6px 16px rgba(239, 106, 54, 0.3);
+}
 /* ============ NAVIGATION CONTENT ============ */
 .nav-content {
   flex: 1;

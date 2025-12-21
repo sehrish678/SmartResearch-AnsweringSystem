@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
-import { FiRefreshCw, FiMessageSquare, FiTrash2, FiChevronRight, FiLogOut } from 'react-icons/fi';
+import { FiRefreshCw, FiMessageSquare, FiTrash2 } from 'react-icons/fi';
 import { ChatContext } from './ChatContext.jsx';
 import '../styles/navbar.css';
-
+import logoIcon from '../assets/icon.png';
 const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/mcp';
 
 function NavBar() {
@@ -27,7 +27,6 @@ function NavBar() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      // Assuming backend now provides a tool for this
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,16 +35,36 @@ function NavBar() {
           method: "tools/call",
           params: {
             name: "smart_get_history_titles",
-            arguments: { token },
-            id: 1
-          }
+            arguments: { token }
+          },
+          id: 1
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        const result = data?.result ?? data;
-        setChatSessions(Array.isArray(result) ? result : result?.sessions || []);
+        console.log('Raw sessions response:', data);
+        
+        let sessions = [];
+        if (data?.result?.content?.[0]?.text) {
+          try {
+            const parsed = JSON.parse(data.result.content[0].text);
+            sessions = parsed.history || [];
+          } catch (e) {
+            console.error('Error parsing sessions:', e);
+          }
+        }
+        
+        const formattedSessions = sessions
+          .map(s => ({
+            id: s.session_id,
+            title: s.title || null,
+            created_at: s.created_at,
+            last_message: s.last_message || ''
+          }))
+          .filter(s => s.title && s.title.trim() !== ''); 
+
+        setChatSessions(formattedSessions);
       }
     } catch (error) {
       console.error('Error loading sessions:', error);
@@ -70,18 +89,31 @@ function NavBar() {
           method: "tools/call",
           params: {
             name: "smart_new_chat",
-            arguments: { token },
-            id: 1
-          }
+            arguments: { token }
+          },
+          id: 1
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        const result = data?.result ?? data;
-        setCurrentSessionId(result.session_id || result.id);
-        setMessages([]);
-        loadChatSessions();
+        console.log('New chat response:', data);
+        
+        let sessionId = null;
+        if (data?.result?.content?.[0]?.text) {
+          try {
+            const parsed = JSON.parse(data.result.content[0].text);
+            sessionId = parsed.session_id || parsed.id;
+          } catch (e) {
+            sessionId = data?.result?.session_id || data?.result?.id;
+          }
+        }
+        
+        if (sessionId) {
+          setCurrentSessionId(sessionId);
+          setMessages([]);
+          loadChatSessions();
+        }
       }
     } catch (error) {
       console.error('Error creating new chat:', error);
@@ -101,23 +133,30 @@ function NavBar() {
           method: "tools/call",
           params: {
             name: "smart_get_chat_history",
-            arguments: { token, session_id: sessionId },
-            id: 1
-          }
+            arguments: { token, session_id: sessionId }
+          },
+          id: 1
         })
       });
 
       if (!response.ok) throw new Error('Failed to load history');
 
       const data = await response.json();
-      const result = data?.result ?? data;
+      console.log('Chat history response:', data);
 
-      let history = Array.isArray(result) ? result : [];
+      let history = [];
+      if (data?.result?.content?.[0]?.text) {
+        try {
+          const parsed = JSON.parse(data.result.content[0].text);
+          history = Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          console.error('Error parsing chat history:', e);
+        }
+      }
 
       const loadedMessages = [];
 
       history.forEach((entry, idx) => {
-        // User message
         loadedMessages.push({
           id: Date.now() + idx * 2,
           sender: 'user',
@@ -125,10 +164,9 @@ function NavBar() {
           time: entry.time || entry.created_at || null,
         });
 
-        // Bot message
-        const botText = entry.content || entry.answer || entry.text || '';
+        let botText = entry.content || entry.answer || entry.text || '';
+        let mode = entry.mode || 'simple'; 
 
-        // References: can be array or stringified JSON
         let refs = entry.references || [];
         if (typeof refs === 'string') {
           try {
@@ -146,21 +184,59 @@ function NavBar() {
               {refs.map((ref, i) => (
                 <div key={i} className="source-link">
                   <span className="source-label">📚 Source {i + 1}:</span>
-                  <a href={ref} target="_blank" rel="noopener noreferrer" className="source-text">
-                    {ref}
-                  </a>
+                  {ref.startsWith('http') || ref.includes('doi.org') ? (
+                    <a href={ref} target="_blank" rel="noopener noreferrer" className="source-text">
+                      {ref}
+                    </a>
+                  ) : (
+                    <span className="source-text">{ref}</span>
+                  )}
                 </div>
               ))}
             </div>
           );
         }
 
+        let displayedAnswer = botText;
+        if (mode === 'deep' && typeof botText === 'string') {
+          let cleanedText = botText.replace(/References are listed below\.[\s\S]*?(?=Conclusion:|$)/i, '').trim();
+
+          if (cleanedText.includes('Conclusion:')) {
+            const parts = cleanedText.split(/Conclusion:\s*/i);
+            const preConclusion = parts[0].trim();
+            const conclusionText = parts.slice(1).join('').trim();
+
+            displayedAnswer = (
+              <>
+                {preConclusion && preConclusion}
+                {conclusionText && (
+                  <div className="conclusion-highlight">
+                    <strong>📌 Conclusion:</strong> {conclusionText}
+                  </div>
+                )}
+              </>
+            );
+          }
+        }
+
+        let was_corrected = false;
+        let original_query = entry.original_query || null;
+        let corrected_query = entry.corrected_query || null;
+
+        if (original_query && corrected_query && original_query !== corrected_query) {
+          was_corrected = true;
+        }
+
         loadedMessages.push({
           id: Date.now() + idx * 2 + 1,
           sender: 'bot',
-          text: botText,
+          text: displayedAnswer,
           time: entry.time || entry.created_at || null,
           sourceContent,
+          original_query,
+          corrected_query,
+          was_corrected,
+          mode,
         });
       });
 
@@ -168,12 +244,8 @@ function NavBar() {
       setCurrentSessionId(String(sessionId));
     } catch (error) {
       console.error('Error loading session:', error);
+      alert('Failed to load chat history. Please try again.');
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
   };
 
   return (
@@ -184,9 +256,18 @@ function NavBar() {
       transition={{ duration: 0.5 }}
     >
       <motion.div className="logo-section" whileHover={{ scale: 1.02 }}>
-        <div className="logo">
-          <div className="logo-icon">💡</div>
-        </div>
+       <motion.div
+            className="logo-image-wrapper"
+            whileHover={{ scale: 1.15, rotate: 10 }} // Bounce + rotate on hover
+            whileTap={{ scale: 0.95 }} // Press-down on tap
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          >
+            <img 
+              src={logoIcon} 
+              alt="Smart Research Logo" 
+              className="logo-image"
+            />
+          </motion.div>
         <h2 className="logo-text">Smart Research</h2>
         <p className="logo-subtitle">Research Based Answers</p>
       </motion.div>
@@ -217,37 +298,36 @@ function NavBar() {
               {chatSessions.map((session) => (
                 <motion.button
                   key={session.id}
-                  className={`history-item ${currentSessionId === session.id ? 'active' : ''}`}
+                  className={`history-item ${String(currentSessionId) === String(session.id) ? 'active' : ''}`}
                   whileHover={{ backgroundColor: 'rgba(239, 106, 54, 0.08)' }}
                   onClick={() => handleLoadSession(session.id)}
                 >
                   <div className="history-item-content">
                     <div className="history-title-text">
-                      {session.title || `Chat ${session.id}`}
+                      {session.title}
                     </div>
                     <div className="history-preview">
-                      {session.last_message || 'No messages'}
+                      {/* {session.last_message || 'No messages'} */}
                     </div>
                     <div className="history-date">
                       {new Date(session.created_at).toLocaleDateString()}
                     </div>
                   </div>
-                  <button
+                  {/* Uncomment for delete button (fixed nesting) */}
+                  {/* <span
                     className="delete-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Implement delete if backend supports it
+                      // handleDeleteSession(session.id, e);
                     }}
                   >
                     <FiTrash2 size={12} />
-                  </button>
+                  </span> */}
                 </motion.button>
               ))}
             </div>
           )}
         </div>
-
-       
       </div>
 
       <div className="nav-footer">
