@@ -65,10 +65,20 @@ export default function App() {
   useEffect(() => {
     const url = new URL(window.location.href);
     const token = url.searchParams.get("token");
+    const user_name = url.searchParams.get("user_name");
+    const user_email = url.searchParams.get("user_email");
+    const user_id = url.searchParams.get("user_id");
     if (token) {
       localStorage.setItem("token", token);
+      if (user_name) localStorage.setItem("user_name", user_name);
+      if (user_email) localStorage.setItem("user_email", user_email);
+      if (user_id) localStorage.setItem("user_id", user_id);
       // Remove token from URL
       url.searchParams.delete("token");
+      url.searchParams.delete("user_name");
+      url.searchParams.delete("user_email");
+      url.searchParams.delete("user_id");
+
       window.history.replaceState(
         {},
         document.title,

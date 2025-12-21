@@ -15,16 +15,11 @@ function getAuthSessionData() {
   let userEmail = "";
   let userId = "";
   try {
-    // Try sessionStorage first, fallback to localStorage
-    const authStorage =
-      sessionStorage.getItem("auth-storage") ||
-      localStorage.getItem("auth-storage");
     if (authStorage) {
-      const parsed = JSON.parse(authStorage);
-      token = parsed.state?.token || "";
-      userName = parsed.state?.user?.name || "";
-      userEmail = parsed.state?.user?.email || "";
-      userId = parsed.state?.user?.id || "";
+      token = localStorage.getItem("token") || "";
+      userName = localStorage.getItem("user_name") || "";
+      userEmail = localStorage.getItem("user_email") || "";
+      userId = localStorage.getItem("user_id") || "";
     }
   } catch (e) {
     // fallback to empty values
