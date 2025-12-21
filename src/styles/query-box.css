@@ -90,16 +90,12 @@
 /* Search Options - Fixed positioning to prevent push down */
 .search-options {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 4px;
-  position: absolute;
-  top: -40px; /* Position above input to avoid pushing down */
-  left: 0;
+  margin-bottom: 6px;
   width: 100%;
-  z-index: 1;
 }
-
 .deep-search-capsule {
   display: inline-flex;
   align-items: center;
