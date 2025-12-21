@@ -6,7 +6,7 @@ import { ChatContext } from './ChatContext.jsx';
 import { TypewriterText } from './TypewriterText.jsx';
 import { extractSourcesFromText } from '../utils/utils.js';
 
-const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/mcp'; // or your local: 'http://localhost:4000/mcp'
+const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/mcp'; // or local: 'http://localhost:4000/mcp'
 
 export function Conversation() {
   const { messages, setMessages, currentSessionId, loadChatSessions } = useContext(ChatContext);
@@ -183,20 +183,90 @@ export function Conversation() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {/* ... (your existing welcome animation code remains unchanged) */}
             <motion.div className="welcome-content">
-              <motion.div className="bot-character" animate={{ y: [0, -20, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}>
+              {/* Animated Bot Character */}
+              <motion.div
+                className="bot-character"
+                animate={{ y: [0, -20, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
                 <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-                  {/* ... your SVG ... */}
+                  {/* Head */}
+                  <motion.circle cx="60" cy="50" r="30" fill="#ef6a36" />
+                  {/* Eyes */}
+                  <motion.circle 
+                    cx="50" cy="45" r="5" fill="white"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 0.5, repeat: Infinity, delay: 0 }}
+                  />
+                  <motion.circle 
+                    cx="70" cy="45" r="5" fill="white"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 0.5, repeat: Infinity, delay: 0.1 }}
+                  />
+                  {/* Smile */}
+                  <path d="M 50 55 Q 60 62 70 55" stroke="white" strokeWidth="2" fill="none" />
+                  {/* Body */}
+                  <rect x="45" y="80" width="30" height="30" rx="5" fill="#ef6a36" />
+                  {/* Arms */}
+                  <motion.rect 
+                    x="25" y="85" width="20" height="8" rx="4" fill="#ef6a36"
+                    animate={{ rotate: [-15, 15, -15] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    style={{ transformOrigin: "35px 89px" }}
+                  />
+                  <motion.rect 
+                    x="75" y="85" width="20" height="8" rx="4" fill="#ef6a36"
+                    animate={{ rotate: [15, -15, 15] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    style={{ transformOrigin: "85px 89px" }}
+                  />
                 </svg>
               </motion.div>
 
-              <motion.div className="welcome-text" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5 }}>
+              {/* Welcome Text */}
+              <motion.div
+                className="welcome-text"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+              >
                 <h2>Hello! 👋</h2>
                 <p>I'm your AI research assistant.</p>
               </motion.div>
 
-              {/* ... rest of welcome content ... */}
+              {/* Feature Cards - RESTORED */}
+              <motion.div
+                className="feature-cards"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+              >
+                {[
+                  { icon: "🔍", title: "Smart Search", desc: "Find research papers instantly" },
+                  { icon: "🧠", title: "Deep Analysis", desc: "Understand complex topics" },
+                ].map((feature, i) => (
+                  <motion.div
+                    key={i}
+                    className="feature-card"
+                    whileHover={{ y: -8, boxShadow: "0 8px 16px rgba(239, 106, 54, 0.2)" }}
+                  >
+                    <span className="feature-icon">{feature.icon}</span>
+                    <h4>{feature.title}</h4>
+                    <p>{feature.desc}</p>
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              {/* Start Text */}
+              <motion.div
+                className="start-text"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1, duration: 0.5 }}
+              >
+                <p>Start typing below to begin!</p>
+              </motion.div>
             </motion.div>
           </motion.div>
         )}
