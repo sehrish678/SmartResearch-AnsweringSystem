@@ -15,21 +15,22 @@ function getAuthSessionData() {
   let userEmail = "";
   let userId = "";
   try {
-    if (authStorage) {
-      token = localStorage.getItem("token") || "";
-      userName = localStorage.getItem("user_name") || "";
-      userEmail = localStorage.getItem("user_email") || "";
-      userId = localStorage.getItem("user_id") || "";
-    }
+    token = localStorage.getItem("token") || "";
+    userName = localStorage.getItem("user_name") || "";
+    userEmail = localStorage.getItem("user_email") || "";
+    userId = localStorage.getItem("user_id") || "";
+
+    if (!token) throw new Error("No token found");
+    return { token, userName, userEmail, userId };
   } catch (e) {
     // fallback to empty values
   }
-  return { token, userName, userEmail, userId };
 }
 
 const openUrl = (key) => {
   // Use Vite env variables (import.meta.env)
   let baseUrlEnv = "";
+
   if (key === "innoscope") {
     baseUrlEnv = import.meta.env.VITE_INNOSCOPE_URL || "";
   } else if (key === "volvox") {
