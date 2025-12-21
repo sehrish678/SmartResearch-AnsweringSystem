@@ -164,7 +164,7 @@ export default function TopNavBar() {
               marginLeft: 12,
             }}
           >
-            Get Started
+            Agentic Workflows
           </button>
           <button
             onClick={handleBackToDashboard}
