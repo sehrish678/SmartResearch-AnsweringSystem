@@ -247,15 +247,7 @@ function NavBar() {
           )}
         </div>
 
-        <motion.button
-          className="logout-btn"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleLogout}
-        >
-          <FiLogOut size={16} />
-          Logout
-        </motion.button>
+       
       </div>
 
       <div className="nav-footer">
