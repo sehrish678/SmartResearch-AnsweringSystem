@@ -1,3 +1,6 @@
+/* App.css */
+
+/* Reset and base styles */
 * {
   margin: 0;
   padding: 0;
@@ -7,16 +10,10 @@
 html, body {
   width: 100%;
   height: 100%;
-  background-color: #000000;
-  overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
-#root {
-  width: 100%;
-  height: 100%;
-}
-
+/* Page Layout */
 .page {
   display: flex;
   flex-direction: row;
@@ -82,6 +79,92 @@ html, body {
   background: #ffffff;
 }
 
+/* Welcome Screen Specific Styles */
+.welcome-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  text-align: center;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+}
+
+.welcome-content {
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.bot-character {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 16px;
+}
+
+.welcome-text h2 {
+  font-size: 2.8rem;
+  margin-bottom: 8px;
+  color: #ef6a36;
+}
+
+.welcome-text p {
+  font-size: 1.2rem;
+  color: #cccccc;
+  margin-bottom: 16px;
+}
+
+.feature-cards {
+  display: flex;
+  flex-direction: column; /* Stack on mobile */
+  gap: 20px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.feature-card {
+  background: rgba(239, 106, 54, 0.1);
+  border: 1px solid rgba(239, 106, 54, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(239, 106, 54, 0.25);
+  background: rgba(239, 106, 54, 0.2);
+}
+
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.feature-card h4 {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+  color: #ef6a36;
+}
+
+.feature-card p {
+  font-size: 1rem;
+  color: #bbbbbb;
+}
+
+.start-text p {
+  font-size: 1.1rem;
+  color: #888888;
+  margin-top: 24px;
+}
+
+/* Responsive Adjustments */
+
 /* Desktop - Sidebar visible */
 @media (min-width: 769px) {
   .sidebar {
@@ -102,6 +185,18 @@ html, body {
     flex: 1;
     margin-left: 0;
     width: calc(100% - 250px);
+  }
+
+  /* Side-by-side cards on desktop */
+  .feature-cards {
+    flex-direction: row;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .feature-card {
+    flex: 1;
+    max-width: 240px;
   }
 }
 
@@ -153,7 +248,7 @@ html, body {
   }
 }
 
-/* Mobile - Full screen chat */
+/* Mobile - Full screen chat + stacked cards */
 @media (max-width: 480px) {
   .sidebar {
     max-width: 100%;
@@ -176,6 +271,42 @@ html, body {
 
   .page {
     flex-direction: column;
+  }
+
+  .welcome-container {
+    padding: 16px;
+  }
+
+  .welcome-text h2 {
+    font-size: 2.4rem;
+  }
+
+  .welcome-text p {
+    font-size: 1.1rem;
+  }
+
+  .feature-card {
+    padding: 16px;
+  }
+
+  .feature-icon {
+    font-size: 2.8rem;
+  }
+
+  .bot-character svg {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .welcome-content {
+    padding: 0 12px;
+  }
+
+  .welcome-text h2 {
+    font-size: 2.2rem;
   }
 }
 
