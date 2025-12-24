@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiPlus, FiSearch, FiX, FiArrowUp, FiMic, FiMicOff } from 'react-icons/fi';
-import { MdOutlineFileUpload } from 'react-icons/md';
+import { FiPlus, FiSearch, FiX, FiArrowUp, FiMic } from 'react-icons/fi';
 import '../styles/query-box.css';
 
 export function QueryBox({ onSend }) {
@@ -75,9 +74,11 @@ export function QueryBox({ onSend }) {
     }
 
     if (isListening) {
+      // Stop listening
       recognition.stop();
       setIsListening(false);
     } else {
+      // Start listening
       setQuery(''); // Clear previous text
       recognition.start();
       setIsListening(true);
@@ -107,6 +108,17 @@ export function QueryBox({ onSend }) {
     }
   }, [query, isDeepSearch]);
 
+  // Audio Wave Icon Component
+  const AudioWaveIcon = () => (
+    <div className="audio-wave-container">
+      <div className="audio-wave-bar"></div>
+      <div className="audio-wave-bar"></div>
+      <div className="audio-wave-bar"></div>
+      <div className="audio-wave-bar"></div>
+      <div className="audio-wave-bar"></div>
+    </div>
+  );
+
   return (
     <div ref={containerRef} className={`query-box-wrapper ${query || isDeepSearch ? 'expanded' : ''}`}>
       <div className="query-box-container">
@@ -129,7 +141,6 @@ export function QueryBox({ onSend }) {
                 <FiSearch size={18} />
                 <span>Deep Search</span>
               </button>
-           
             </div>
           )}
         </div>
@@ -155,7 +166,12 @@ export function QueryBox({ onSend }) {
           {isListening && (
             <div className="search-options">
               <div className="listening-capsule">
-                <span className="listening-dot"></span>
+                <div className="listening-wave">
+                  <div className="listening-wave-bar"></div>
+                  <div className="listening-wave-bar"></div>
+                  <div className="listening-wave-bar"></div>
+                  <div className="listening-wave-bar"></div>
+                </div>
                 <span>Listening...</span>
               </div>
             </div>
@@ -176,16 +192,15 @@ export function QueryBox({ onSend }) {
           />
         </div>
 
-        {/* Voice Input Button */}
+        {/* Voice Input Button - GPT Style */}
         <button 
           className={`voice-button ${isListening ? 'listening' : ''}`}
           onClick={toggleVoiceInput}
           title={isListening ? "Stop listening" : "Voice input"}
         >
-          {isListening ? <FiMicOff size={18} /> : <FiMic size={18} />}
+          {isListening ? <AudioWaveIcon /> : <FiMic size={18} />}
         </button>
 
-        {/* Send Button - Right Side */}
         {(query || isDeepSearch) && (
           <button className="query-box-button" onClick={handleSend} title="Send message">
             <FiArrowUp size={18} />

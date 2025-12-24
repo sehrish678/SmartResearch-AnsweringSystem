@@ -55,12 +55,12 @@ html, body {
   z-index: 1001;
   background: #fafafa;
   border: none;
-  color: white;
+  color: #ef6a36;
   cursor: pointer;
   padding: 12px 16px;
   font-size: 18px;
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(139, 135, 133, 0.3);
   font-weight: 600;
   align-items: center;
@@ -68,13 +68,29 @@ html, body {
 }
 
 .menu-toggle:hover {
-  background: #fafafa;
+  background: #f5f5f5;
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(239, 106, 54, 0.4);
 }
 
 .menu-toggle:active {
   transform: scale(0.95);
+}
+
+/* When sidebar is OPEN - Match navbar background */
+.sidebar.open ~ .menu-toggle,
+body.sidebar-open .menu-toggle {
+  background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+  color: #ef6a36;
+  border: 1px solid rgba(239, 106, 54, 0.3);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.sidebar.open ~ .menu-toggle:hover,
+body.sidebar-open .menu-toggle:hover {
+  background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-color: rgba(239, 106, 54, 0.5);
+  box-shadow: 0 4px 16px rgba(239, 106, 54, 0.3);
 }
 
 .main-wrapper {
@@ -109,13 +125,21 @@ html, body {
   opacity: 1;
   pointer-events: auto;
 }
+
 .hamburger-icon {
   stroke: #ef6a36 !important;
+  transition: stroke 0.3s ease;
 }
 
 .hamburger-icon:hover {
   stroke: #d95a24; 
 }
+
+.sidebar.open ~ .menu-toggle .hamburger-icon,
+body.sidebar-open .menu-toggle .hamburger-icon {
+  stroke: #ef6a36 !important;
+}
+
 /* Desktop - Sidebar visible */
 @media (min-width: 769px) {
   .sidebar {
@@ -197,10 +221,9 @@ html, body {
   }
 }
 
-/* Mobile - Sidebar with right margin */
 @media (max-width: 480px) {
   .page {
-    margin-top: 52px; /* Smaller top navbar on mobile */
+    margin-top: 52px; 
     height: calc(100vh - 52px);
   }
 
@@ -213,7 +236,7 @@ html, body {
   }
 
   .menu-toggle {
-    top: 64px; /* 52px + 12px */
+    top: 64px; 
     left: 12px;
     padding: 10px 14px;
     font-size: 16px;
@@ -277,8 +300,21 @@ html, body {
   .sidebar,
   .menu-toggle,
   .main-wrapper,
-  .sidebar-overlay {
+  .sidebar-overlay,
+  .hamburger-icon {
     transition: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .menu-toggle {
+    border: 2px solid #ef6a36;
+  }
+
+  .sidebar.open ~ .menu-toggle,
+  body.sidebar-open .menu-toggle {
+    outline: 2px solid #ef6a36;
+    outline-offset: 2px;
   }
 }
 
@@ -286,4 +322,86 @@ html, body {
   body.sidebar-open {
     overflow: hidden;
   }
+}
+
+/* Responsive utilities */
+img, picture, video, canvas, svg, iframe {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+body {
+  font-size: clamp(14px, 2vw, 16px);
+  line-height: 1.6;
+}
+
+h1 { font-size: clamp(1.5rem, 5vw, 2.5rem); }
+h2 { font-size: clamp(1.25rem, 4vw, 2rem); }
+h3 { font-size: clamp(1.1rem, 3vw, 1.75rem); }
+h4 { font-size: clamp(1rem, 2.5vw, 1.5rem); }
+h5 { font-size: clamp(0.95rem, 2vw, 1.25rem); }
+h6 { font-size: clamp(0.9rem, 1.5vw, 1.1rem); }
+
+p, li, span {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+}
+
+h1, h2, h3, h4, h5, h6, p, li, span, a, button, label {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+input, textarea, select, button {
+  max-width: 100%;
+  font-size: clamp(14px, 2vw, 16px);
+}
+
+div, section, article, aside, header, footer, nav, main {
+  max-width: 100%;
+}
+
+table {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  table {
+    font-size: clamp(12px, 2vw, 14px);
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.5rem, 2vw, 1rem);
+}
+
+.responsive-spacing {
+  padding: clamp(1rem, 3vw, 2rem);
+  margin: clamp(0.5rem, 2vw, 1rem);
+}
+
+@media (max-width: 768px) {
+  button, a, input[type="button"], input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+    padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px);
+  }
+}
+
+.content-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 5vw, 2rem);
 }
