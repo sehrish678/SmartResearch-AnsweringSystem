@@ -21,20 +21,20 @@ html, body {
   display: flex;
   flex-direction: row;
   width: 100vw;
-  height: calc(100vh - 60px); /* Subtract top navbar height */
+  height: calc(100vh - 60px);
   background-color: #000000;
   overflow: hidden;
   position: relative;
-  margin-top: 60px; /* Space for top navbar */
+  margin-top: 60px;
 }
 
 /* Sidebar */
 .sidebar {
   position: fixed;
   left: 0;
-  top: 60px; /* Below top navbar */
+  top: 60px;
   width: 250px;
-  height: calc(100vh - 60px); /* Full height minus top navbar */
+  height: calc(100vh - 60px);
   background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
   border-right: 1px solid rgba(195, 186, 183, 0.2);
   transform: translateX(0);
@@ -50,7 +50,7 @@ html, body {
 .menu-toggle {
   display: none;
   position: fixed;
-  top: 76px; /* Below top navbar (60px + 16px margin) */
+  top: 76px;
   left: 16px;
   z-index: 1001;
   background: #fafafa;
@@ -65,6 +65,7 @@ html, body {
   font-weight: 600;
   align-items: center;
   justify-content: center;
+  outline: none;
 }
 
 .menu-toggle:hover {
@@ -77,6 +78,10 @@ html, body {
   transform: scale(0.95);
 }
 
+.menu-toggle:focus {
+  outline: none;
+}
+
 /* When sidebar is OPEN - Match navbar background */
 .sidebar.open ~ .menu-toggle,
 body.sidebar-open .menu-toggle {
@@ -84,6 +89,7 @@ body.sidebar-open .menu-toggle {
   color: #ef6a36;
   border: 1px solid rgba(239, 106, 54, 0.3);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  outline: none;
 }
 
 .sidebar.open ~ .menu-toggle:hover,
@@ -91,6 +97,11 @@ body.sidebar-open .menu-toggle:hover {
   background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%);
   border-color: rgba(239, 106, 54, 0.5);
   box-shadow: 0 4px 16px rgba(239, 106, 54, 0.3);
+}
+
+.sidebar.open ~ .menu-toggle:focus,
+body.sidebar-open .menu-toggle:focus {
+  outline: none;
 }
 
 .main-wrapper {
@@ -196,7 +207,7 @@ body.sidebar-open .menu-toggle .hamburger-icon {
 
   .menu-toggle {
     display: flex;
-    top: 68px; /* 56px + 12px */
+    top: 68px;
   }
 
   .sidebar-overlay {
@@ -215,7 +226,6 @@ body.sidebar-open .menu-toggle .hamburger-icon {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Shift main content when sidebar is open */
   .sidebar.open ~ .main-wrapper {
     transform: translateX(calc(100vw - 80px));
   }
@@ -257,7 +267,6 @@ body.sidebar-open .menu-toggle .hamburger-icon {
     flex-direction: column;
   }
 
-  /* Shift main content when sidebar is open */
   .sidebar.open ~ .main-wrapper {
     transform: translateX(calc(100vw - 60px));
   }
@@ -306,17 +315,7 @@ body.sidebar-open .menu-toggle .hamburger-icon {
   }
 }
 
-@media (prefers-contrast: high) {
-  .menu-toggle {
-    border: 2px solid #ef6a36;
-  }
-
-  .sidebar.open ~ .menu-toggle,
-  body.sidebar-open .menu-toggle {
-    outline: 2px solid #ef6a36;
-    outline-offset: 2px;
-  }
-}
+/* Removed High Contrast Mode button borders */
 
 @media (max-width: 768px) {
   body.sidebar-open {
@@ -404,4 +403,20 @@ table {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 clamp(1rem, 5vw, 2rem);
+}
+
+/* Remove all button outlines globally */
+button:focus,
+button:active,
+a:focus,
+a:active,
+.nav-item:focus,
+.nav-item:active,
+.menu-toggle:focus,
+.menu-toggle:active,
+.logo-section:focus,
+.logo-section:active,
+.logo:focus,
+.logo:active {
+  outline: none;
 }

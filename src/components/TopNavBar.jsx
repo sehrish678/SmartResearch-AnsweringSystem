@@ -127,7 +127,7 @@ export default function TopNavBar() {
             idealForge AI
           </h1>
         </div>
-        <div className="top-navbar-items" style={{ gap: 24 }}>
+        <div className="top-navbar-items" style={{ gap: 8 }}>
           {navLinks.map((link) => (
             <button
               key={link.label}
