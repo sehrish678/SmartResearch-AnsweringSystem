@@ -68,7 +68,6 @@
   background: transparent;
 }
 
-/* Custom scrollbar for textarea */
 .query-box-input::-webkit-scrollbar {
   width: 6px;
 }
@@ -86,7 +85,6 @@
   background: #9ca3af;
 }
 
-/* Search Options */
 .search-options {
   display: flex;
   flex-direction: row;

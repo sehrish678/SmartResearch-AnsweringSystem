@@ -12,7 +12,6 @@ export function QueryBox({ onSend }) {
   const menuRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Initialize Speech Recognition
   useEffect(() => {
     if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -74,12 +73,10 @@ export function QueryBox({ onSend }) {
     }
 
     if (isListening) {
-      // Stop listening
       recognition.stop();
       setIsListening(false);
     } else {
-      // Start listening
-      setQuery(''); // Clear previous text
+      setQuery(''); 
       recognition.start();
       setIsListening(true);
     }
@@ -108,7 +105,6 @@ export function QueryBox({ onSend }) {
     }
   }, [query, isDeepSearch]);
 
-  // Audio Wave Icon Component
   const AudioWaveIcon = () => (
     <div className="audio-wave-container">
       <div className="audio-wave-bar"></div>
@@ -122,7 +118,6 @@ export function QueryBox({ onSend }) {
   return (
     <div ref={containerRef} className={`query-box-wrapper ${query || isDeepSearch ? 'expanded' : ''}`}>
       <div className="query-box-container">
-        {/* Plus Menu Button - Left Side */}
         <div className="menu-wrapper" ref={menuRef}>
           <button 
             className="query-box-menu-btn"
@@ -145,7 +140,6 @@ export function QueryBox({ onSend }) {
           )}
         </div>
 
-        {/* Input Area */}
         <div className="input-wrapper">
           {isDeepSearch && (
             <div className="search-options">
@@ -192,7 +186,6 @@ export function QueryBox({ onSend }) {
           />
         </div>
 
-        {/* Voice Input Button - GPT Style */}
         <button 
           className={`voice-button ${isListening ? 'listening' : ''}`}
           onClick={toggleVoiceInput}
