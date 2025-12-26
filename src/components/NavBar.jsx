@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { motion } from 'framer-motion';
-import { FiRefreshCw, FiMessageSquare, FiTrash2 } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiRefreshCw, FiMessageSquare, FiTrash2, FiX } from 'react-icons/fi';
 import { ChatContext } from './ChatContext.jsx';
 import '../styles/navbar.css';
 import logoIcon from '../assets/icon.png';
+
 const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/mcp';
 
 function NavBar() {
@@ -16,7 +17,10 @@ function NavBar() {
   } = useContext(ChatContext);
   
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
-  const [tempNewChatId, setTempNewChatId] = useState(null); // Track temporary "New Chat"
+  const [tempNewChatId, setTempNewChatId] = useState(null);
+  const [sessionToDelete, setSessionToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     loadChatSessions();
@@ -265,7 +269,71 @@ function NavBar() {
     }
   };
 
-  // Get display title for a session
+  const handleDeleteClick = (sessionId, e) => {
+    e.stopPropagation(); // Prevent triggering load session
+    setSessionToDelete(sessionId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!sessionToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login first');
+        return;
+      }
+
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: {
+            name: "smart_delete_chat",
+            arguments: {
+              token,
+              session_id: parseInt(sessionToDelete)
+            }
+          },
+          id: 1
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Delete response:', data);
+        
+        // Remove from local state
+        setChatSessions(prev => prev.filter(session => String(session.id) !== String(sessionToDelete)));
+        
+        // If current session is being deleted, switch to new chat
+        if (String(currentSessionId) === String(sessionToDelete)) {
+          setCurrentSessionId(null);
+          setMessages([]);
+        }
+        
+        setShowDeleteConfirm(false);
+        setSessionToDelete(null);
+      } else {
+        throw new Error('Failed to delete chat');
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      alert('Failed to delete chat. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setSessionToDelete(null);
+  };
+
   const getSessionTitle = (session) => {
     if (String(session.id) === String(tempNewChatId)) {
       return 'New Chat';
@@ -273,15 +341,22 @@ function NavBar() {
     return session.title;
   };
 
+  const getSessionToDeleteTitle = () => {
+    if (!sessionToDelete) return '';
+    const session = chatSessions.find(s => String(s.id) === String(sessionToDelete));
+    return session ? getSessionTitle(session) : '';
+  };
+
   return (
-    <motion.nav 
-      className="navbar"
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <motion.div className="logo-section" whileHover={{ scale: 1.02 }}>
-       <motion.div
+    <>
+      <motion.nav 
+        className="navbar"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div className="logo-section" whileHover={{ scale: 1.02 }}>
+          <motion.div
             className="logo-image-wrapper"
             whileHover={{ scale: 1.15, rotate: 10 }}
             whileTap={{ scale: 0.95 }}
@@ -293,62 +368,129 @@ function NavBar() {
               className="logo-image"
             />
           </motion.div>
-        <h2 className="logo-text">Smart Research</h2>
-        <p className="logo-subtitle">Research Based Answers</p>
-      </motion.div>
+          <h2 className="logo-text">Smart Research</h2>
+          <p className="logo-subtitle">Research Based Answers</p>
+        </motion.div>
 
-      <div className="nav-content">
-        <motion.button
-          className="nav-item new-chat-btn"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleNewChat}
-        >
-          <FiRefreshCw className="nav-icon" />
-          <span>New Chat</span>
-        </motion.button>
+        <div className="nav-content">
+          <motion.button
+            className="nav-item new-chat-btn"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleNewChat}
+          >
+            <FiRefreshCw className="nav-icon" />
+            <span>New Chat</span>
+          </motion.button>
 
-        <div className="chat-history-section">
-          <h3 className="history-title">Chat History</h3>
-          
-          {isLoadingSessions ? (
-            <div className="loading-text">Loading...</div>
-          ) : chatSessions.length === 0 ? (
-            <div className="empty-state">
-              <FiMessageSquare size={20} />
-              <p>No chats yet</p>
-            </div>
-          ) : (
-            <div className="history-list">
-              {chatSessions.map((session) => (
-                <motion.button
-                  key={session.id}
-                  className={`history-item ${String(currentSessionId) === String(session.id) ? 'active' : ''}`}
-                  whileHover={{ backgroundColor: 'rgba(239, 106, 54, 0.08)' }}
-                  onClick={() => handleLoadSession(session.id)}
-                >
-                  <div className="history-item-content">
-                    <div className="history-title-text">
-                      {getSessionTitle(session)}
-                    </div>
-                    <div className="history-preview">
-                      {/* {session.last_message || 'No messages'} */}
-                    </div>
-                    <div className="history-date">
-                      {new Date(session.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-          )}
+          <div className="chat-history-section">
+            <h3 className="history-title">Chat History</h3>
+            
+            {isLoadingSessions ? (
+              <div className="loading-text">Loading...</div>
+            ) : chatSessions.length === 0 ? (
+              <div className="empty-state">
+                <FiMessageSquare size={20} />
+                <p>No chats yet</p>
+              </div>
+            ) : (
+              <div className="history-list">
+                {chatSessions.map((session) => (
+                  <motion.div
+                    key={session.id}
+                    className="history-item-wrapper"
+                    whileHover={{ backgroundColor: 'rgba(239, 106, 54, 0.08)' }}
+                  >
+                    <button
+                      className={`history-item ${String(currentSessionId) === String(session.id) ? 'active' : ''}`}
+                      onClick={() => handleLoadSession(session.id)}
+                    >
+                      <div className="history-item-content">
+                        <div className="history-title-text">
+                          {getSessionTitle(session)}
+                        </div>
+                        <div className="history-preview">
+                          {/* {session.last_message || 'No messages'} */}
+                        </div>
+                        <div className="history-date">
+                          {new Date(session.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </button>
+                    
+                    <motion.button
+                       className="delete-chat-btn"
+                        onClick={(e) => handleDeleteClick(session.id, e)}
+                        whileHover={{ scale: 1.1, opacity: 1 }}
+                        whileTap={{ scale: 0.9 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.6 }}
+                        title="Delete chat"
+                       >
+                      <FiTrash2 size={14} />
+                    </motion.button>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="nav-footer">
-        <p>© 2025 Smart Research</p>
-      </div>
-    </motion.nav>
+        <div className="nav-footer">
+          <p>© 2025 Smart Research</p>
+        </div>
+      </motion.nav>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={cancelDelete}
+          >
+            <motion.div
+              className="delete-modal"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-header">
+                <h3>Delete Chat</h3>
+                <button className="close-modal" onClick={cancelDelete}>
+                  <FiX size={20} />
+                </button>
+              </div>
+              
+              <div className="modal-body">
+                <p>Are you sure you want to delete "{getSessionToDeleteTitle()}"?</p>
+                <p className="warning-text">This action cannot be undone.</p>
+              </div>
+              
+              <div className="modal-actions">
+                <button
+                  className="cancel-btn"
+                  onClick={cancelDelete}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="delete-btn"
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
