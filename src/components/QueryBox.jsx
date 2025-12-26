@@ -4,6 +4,7 @@ import '../styles/query-box.css';
 
 export function QueryBox({ onSend }) {
   const [query, setQuery] = useState("");
+  const [finalText, setFinalText] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeepSearch, setIsDeepSearch] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -22,22 +23,27 @@ export function QueryBox({ onSend }) {
       recognitionInstance.lang = 'en-US';
 
       recognitionInstance.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
+        let new_final = '';
+        let interim = '';
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
+          const trans = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += transcript + ' ';
+            new_final += trans + ' ';
           } else {
-            interimTranscript += transcript;
+            interim += trans;
           }
         }
 
-        setQuery(prev => {
-          const newText = finalTranscript || interimTranscript;
-          return prev + newText;
-        });
+        if (new_final) {
+          setFinalText(prevFinal => {
+            const updatedFinal = prevFinal + new_final;
+            setQuery(updatedFinal + interim);
+            return updatedFinal;
+          });
+        } else {
+          setQuery(finalText + interim);
+        }
       };
 
       recognitionInstance.onerror = (event) => {
@@ -51,7 +57,7 @@ export function QueryBox({ onSend }) {
 
       setRecognition(recognitionInstance);
     }
-  }, []);
+  }, [finalText]);
 
   const handleChange = (e) => {
     setQuery(e.target.value);
@@ -62,6 +68,7 @@ export function QueryBox({ onSend }) {
     if (text && onSend) {
       onSend(text, isDeepSearch ? 'deep' : 'simple');
       setQuery('');
+      setFinalText('');
       setIsDeepSearch(false);
     }
   };
@@ -76,7 +83,8 @@ export function QueryBox({ onSend }) {
       recognition.stop();
       setIsListening(false);
     } else {
-      setQuery(''); 
+      setQuery('');
+      setFinalText('');
       recognition.start();
       setIsListening(true);
     }
@@ -141,36 +149,36 @@ export function QueryBox({ onSend }) {
         </div>
 
         <div className="input-wrapper">
-          {isDeepSearch && (
-            <div className="search-options">
-              <div className="deep-search-capsule">
-                <span className="thinking-dot"></span>
-                <span>Thinking harder...</span>
-                <button 
-                  className="capsule-close-btn"
-                  onClick={() => setIsDeepSearch(false)}
-                  title="Disable deep search"
-                >
-                  <FiX size={14} />
-                </button>
-              </div>
-            </div>
-          )}
+         {(isDeepSearch || isListening) && (
+  <div className="search-options">
+    {isDeepSearch && (
+      <div className="deep-search-capsule">
+        <span className="thinking-dot"></span>
+        <span>Thinking harder...</span>
+        <button 
+          className="capsule-close-btn"
+          onClick={() => setIsDeepSearch(false)}
+          title="Disable deep search"
+        >
+          <FiX size={14} />
+        </button>
+      </div>
+    )}
 
-          {isListening && (
-            <div className="search-options">
-              <div className="listening-capsule">
-                <div className="listening-wave">
-                  <div className="listening-wave-bar"></div>
-                  <div className="listening-wave-bar"></div>
-                  <div className="listening-wave-bar"></div>
-                  <div className="listening-wave-bar"></div>
-                </div>
-                <span>Listening...</span>
-              </div>
-            </div>
-          )}
-          
+    {isListening && (
+      <div className="listening-capsule">
+        <div className="listening-wave">
+          <div className="listening-wave-bar"></div>
+          <div className="listening-wave-bar"></div>
+          <div className="listening-wave-bar"></div>
+          <div className="listening-wave-bar"></div>
+        </div>
+        <span>Listening...</span>
+      </div>
+    )}
+  </div>
+)}
+
           <textarea
             ref={inputRef}
             placeholder="Ask anything..."

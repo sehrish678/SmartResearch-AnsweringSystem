@@ -1,6 +1,3 @@
-/* Conversation UI styles - cleaned, deduplicated, and theme-safe */
-
-/* Color variables - keep palette unchanged, override for dark theme below */
 :root {
   --bg: #ffffff;
   --panel-bg: #ffffff;
@@ -37,7 +34,6 @@
   --source-text-light: #ffffff;
 }
 
-/* Layout */
 .conversation {
   width: 100%;
   min-height: 100vh;
@@ -94,7 +90,6 @@
   max-width: 100%;
 }
 
-/* Typography */
 .welcome-text {
   display: flex;
   flex-direction: column;
@@ -117,7 +112,6 @@
   line-height: 1.6;
 }
 
-/* Feature cards */
 .feature-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -169,7 +163,6 @@
   margin-top: 10px;
 }
 
-/* Messages */
 .message {
   max-width: var(--max-message-width);
   padding: 10px 12px;
@@ -197,13 +190,11 @@
   color: var(--text);
 }
 
-/* Message inner wrapper for spacing/line-height */
 .message-text {
   margin-bottom: 8px;
   line-height: 1.6;
 }
 
-/* Correction box (single definition) */
 .correction-box {
   background: #f8f9fa;
   border-left: 3px solid #1a73e8;
@@ -217,7 +208,7 @@
 .did-you-mean {
   font-size: 12px;
   font-weight: 700;
-  color: #a50a0a; /* kept red emphasis used previously */
+  color: #a50a0a; 
   display: block;
   margin-bottom: 6px;
 }

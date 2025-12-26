@@ -89,25 +89,19 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 6px;
   width: 100%;
 }
 
+
 .deep-search-capsule {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
   background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 100%);
   color: #2e7d32;
-  padding: 7px 12px;
-  border-radius: 18px;
   font-size: 12.5px;
   font-weight: 600;
   border: 1px solid #81c784;
-  width: fit-content;
   box-shadow: 0 1px 3px rgba(46, 125, 50, 0.1);
 }
 
@@ -307,20 +301,29 @@
 }
 
 .listening-capsule {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
   background: linear-gradient(135deg, #f4e6d7 0%, #f9f2e8 100%);
   color: #d8771b;
+  border: 1px solid #d3b27d;
+  animation: fadeIn 0.3s ease;
+}
+.deep-search-capsule,
+.listening-capsule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 7px 14px;
   border-radius: 18px;
   font-size: 12.5px;
   font-weight: 600;
-  border: 1px solid #d3b27d;
-  width: fit-content;
-  box-shadow: 0 1px 3px rgba(163, 94, 16, 0.15);
-  animation: fadeIn 0.3s ease;
+  height: 40px;
+  min-width: 120px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  flex: 0 0 auto;
 }
+
 
 @keyframes fadeIn {
   from {
@@ -341,6 +344,7 @@
 }
 
 .listening-wave-bar {
+  height: 6px !important; /* normalized to match dot size */
   width: 2px;
   background: #d8771b;
   border-radius: 2px;
@@ -349,22 +353,18 @@
 
 .listening-wave-bar:nth-child(1) {
   animation-delay: 0s;
-  height: 4px;
 }
 
 .listening-wave-bar:nth-child(2) {
   animation-delay: 0.15s;
-  height: 8px;
 }
 
 .listening-wave-bar:nth-child(3) {
   animation-delay: 0.3s;
-  height: 12px;
 }
 
 .listening-wave-bar:nth-child(4) {
   animation-delay: 0.45s;
-  height: 8px;
 }
 
 @keyframes capsuleWave {
@@ -425,6 +425,19 @@
   background: rgba(46, 125, 50, 0.15);
   transform: rotate(90deg);
 }
+@media (max-width: 480px) {
+  .search-options {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .deep-search-capsule,
+  .listening-capsule {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
 
 /* Dark Theme */
 [data-theme="dark"] .query-box-container {
