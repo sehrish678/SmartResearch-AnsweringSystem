@@ -14,50 +14,55 @@ export function QueryBox({ onSend }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
-      
-      recognitionInstance.continuous = true;
-      recognitionInstance.interimResults = true;
-      recognitionInstance.lang = 'en-US';
+  if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognitionInstance = new SpeechRecognition();
+    
+    recognitionInstance.continuous = true;
+    recognitionInstance.interimResults = true;
+    recognitionInstance.lang = 'en-US';
 
-      recognitionInstance.onresult = (event) => {
-        let new_final = '';
-        let interim = '';
+    recognitionInstance.onresult = (event) => {
+      let new_final = '';
+      let interim = '';
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const trans = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            new_final += trans + ' ';
-          } else {
-            interim += trans;
-          }
-        }
-
-        if (new_final) {
-          setFinalText(prevFinal => {
-            const updatedFinal = prevFinal + new_final;
-            setQuery(updatedFinal + interim);
-            return updatedFinal;
-          });
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const trans = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          new_final += trans + ' ';
         } else {
-          setQuery(finalText + interim);
+          interim += trans;
         }
-      };
+      }
 
-      recognitionInstance.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        setIsListening(false);
-      };
+      if (new_final) {
+        setFinalText(prevFinal => {
+          const updatedFinal = prevFinal + new_final;
+          setQuery(updatedFinal + interim);
+          return updatedFinal;
+        });
+      } else {
+        setQuery(finalText + interim);
+      }
+    };
 
-      recognitionInstance.onend = () => {
-        setIsListening(false);
-      };
+    recognitionInstance.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+    };
 
-      setRecognition(recognitionInstance);
-    }
-  }, [finalText]);
+    recognitionInstance.onend = () => {
+      setIsListening(false);
+    };
+
+    setRecognition(recognitionInstance);
+
+    return () => {
+      recognitionInstance.stop();
+      recognitionInstance.abort();
+    };
+  }
+}, []); 
 
   const handleChange = (e) => {
     setQuery(e.target.value);
