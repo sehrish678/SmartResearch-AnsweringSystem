@@ -16,6 +16,7 @@ function NavBar() {
   } = useContext(ChatContext);
   
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [tempNewChatId, setTempNewChatId] = useState(null); // Track temporary "New Chat"
 
   useEffect(() => {
     loadChatSessions();
@@ -112,7 +113,17 @@ function NavBar() {
         if (sessionId) {
           setCurrentSessionId(sessionId);
           setMessages([]);
-          loadChatSessions();
+          setTempNewChatId(sessionId); 
+          
+          const tempSession = {
+            id: sessionId,
+            title: 'New Chat',
+            created_at: new Date().toISOString(),
+            last_message: '',
+            isTemp: true
+          };
+          
+          setChatSessions(prev => [tempSession, ...prev]);
         }
       }
     } catch (error) {
@@ -122,6 +133,12 @@ function NavBar() {
 
   const handleLoadSession = async (sessionId) => {
     console.log('Loading session:', sessionId);
+    
+    if (tempNewChatId && String(tempNewChatId) !== String(sessionId)) {
+      setTempNewChatId(null);
+      await loadChatSessions();
+    }
+    
     try {
       const token = localStorage.getItem('token');
 
@@ -248,6 +265,14 @@ function NavBar() {
     }
   };
 
+  // Get display title for a session
+  const getSessionTitle = (session) => {
+    if (String(session.id) === String(tempNewChatId)) {
+      return 'New Chat';
+    }
+    return session.title;
+  };
+
   return (
     <motion.nav 
       className="navbar"
@@ -258,8 +283,8 @@ function NavBar() {
       <motion.div className="logo-section" whileHover={{ scale: 1.02 }}>
        <motion.div
             className="logo-image-wrapper"
-            whileHover={{ scale: 1.15, rotate: 10 }} // Bounce + rotate on hover
-            whileTap={{ scale: 0.95 }} // Press-down on tap
+            whileHover={{ scale: 1.15, rotate: 10 }}
+            whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             <img 
@@ -304,7 +329,7 @@ function NavBar() {
                 >
                   <div className="history-item-content">
                     <div className="history-title-text">
-                      {session.title}
+                      {getSessionTitle(session)}
                     </div>
                     <div className="history-preview">
                       {/* {session.last_message || 'No messages'} */}
@@ -313,16 +338,6 @@ function NavBar() {
                       {new Date(session.created_at).toLocaleDateString()}
                     </div>
                   </div>
-                  {/* Uncomment for delete button (fixed nesting) */}
-                  {/* <span
-                    className="delete-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // handleDeleteSession(session.id, e);
-                    }}
-                  >
-                    <FiTrash2 size={12} />
-                  </span> */}
                 </motion.button>
               ))}
             </div>
