@@ -120,6 +120,64 @@ function NavBar() {
     }
   };
 
+  const confirmDelete = async () => {
+  if (!sessionToDelete) return;
+  
+  setIsDeleting(true);
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login first');
+      return;
+    }
+
+    const response = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: {
+          name: "smart_delete_chat",
+          arguments: {
+            token,
+            session_id: parseInt(sessionToDelete)
+          }
+        },
+        id: 1
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Delete response:', data);
+      
+      // Remove from local state
+      setChatSessions(prev => prev.filter(session => String(session.id) !== String(sessionToDelete)));
+      
+      // If current session is being deleted, switch to new chat
+      if (String(currentSessionId) === String(sessionToDelete)) {
+        setCurrentSessionId(null);
+        setMessages([]);
+      }
+      
+      setShowDeleteConfirm(false);
+      setSessionToDelete(null);
+    } else {
+      throw new Error('Failed to delete chat');
+    }
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+    alert('Failed to delete chat. Please try again.');
+  } finally {
+    setIsDeleting(false);
+  }
+};
+
+const cancelDelete = () => {
+  setShowDeleteConfirm(false);
+  setSessionToDelete(null);
+};
   const handleLoadSession = async (sessionId) => {
     console.log('Loading session:', sessionId);
     try {
@@ -313,16 +371,15 @@ function NavBar() {
                       {new Date(session.created_at).toLocaleDateString()}
                     </div>
                   </div>
-                  {/* Uncomment for delete button (fixed nesting) */}
-                  {/* <span
+                  <span
                     className="delete-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // handleDeleteSession(session.id, e);
+                      handleDeleteSession(session.id, e);
                     }}
                   >
                     <FiTrash2 size={12} />
-                  </span> */}
+                  </span>
                 </motion.button>
               ))}
             </div>
