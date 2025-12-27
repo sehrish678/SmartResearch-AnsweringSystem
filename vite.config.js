@@ -6,6 +6,17 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   base: '/', 
+  build: {
+    chunkSizeWarningLimit: 1000, 
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'framer-vendor': ['framer-motion'],
+        }
+      }
+    }
+  },
   
   define: {
     global: 'globalThis',
