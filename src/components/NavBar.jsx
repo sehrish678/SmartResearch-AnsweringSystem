@@ -202,7 +202,7 @@ function NavBar() {
 
   const handleLoadSession = async (sessionId) => {
     console.log('Loading session:', sessionId);
-    loadChatSessions();
+  ///  loadChatSessions();
     try {
       const token = localStorage.getItem('token');
 
