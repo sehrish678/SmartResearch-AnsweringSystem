@@ -4,6 +4,8 @@ import '../styles/conversation.css';
 import { QueryBox } from './QueryBox.jsx';
 import { ChatContext } from './ChatContext.jsx';
 import { TypewriterText } from './TypewriterText.jsx';
+import { jsPDF } from "jspdf";
+import { Clipboard, Volume2, Square, Download } from "lucide-react";
 
 const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/mcp';
 
@@ -12,6 +14,12 @@ export function Conversation() {
   const [showWelcome, setShowWelcome] = useState(true);
   const chatPanelRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+
+const showToast = (msg) => {
+  setToast(msg);
+  setTimeout(() => setToast(null), 1200);
+};
 
   async function handleSendQuery(raw, mode = 'simple') {
     const text = raw.trim();
@@ -178,6 +186,59 @@ export function Conversation() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+  const handleDownloadPdf = (text, index) => {
+  if (!text) return;
+
+  const doc = new jsPDF();
+
+  const content =
+    typeof text === "string"
+      ? text
+      : (text.props?.children || "Chat response");
+
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(12);
+
+  const lines = doc.splitTextToSize(content, 180); // wrap text
+  doc.text(lines, 15, 20);
+
+  doc.save(`chat-response-${index + 1}.pdf`);
+};
+
+const handleCopy = (text) => {
+  if (!text) return;
+  navigator.clipboard.writeText(
+    typeof text === "string" ? text : (text.props?.children || "")
+  );
+  showToast("Copied!");
+};
+
+const [isSpeaking, setIsSpeaking] = useState(false);
+
+const handleSpeak = (text) => {
+  if (!text) return;
+
+  // Stop if already speaking
+  if (isSpeaking) {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(
+    typeof text === "string" ? text : (text.props?.children || "")
+  );
+  utter.rate = 1;
+  utter.pitch = 1;
+  utter.lang = "en-US";
+
+  utter.onend = () => setIsSpeaking(false);
+
+  setIsSpeaking(true);
+  window.speechSynthesis.speak(utter);
+};
+
 
   return (
     <div className="conversation">
@@ -286,14 +347,38 @@ export function Conversation() {
                 <TypewriterText text={`"${m.corrected_query}"`} /> 
               </div>
             )}
-            <div className="message-text">
-              {m.sender === 'bot' && idx === messages.length - 1 ? (
-                <TypewriterText text={typeof m.text === 'string' ? m.text : ''} />
-              ) : (
-                m.text
-              )}
-            </div>
-            {m.sourceContent}
+  <div className="message-text">
+  {m.sender === 'bot' && idx === messages.length - 1 ? (
+    <TypewriterText text={typeof m.text === 'string' ? m.text : ''} />
+  ) : (
+    m.text
+  )}
+</div>
+
+{/* action buttons */}
+{m.sender === "bot" && (
+  <div className="message-actions">
+    
+    <button className="icon-btn" onClick={() => handleCopy(m.text)}>
+      <Clipboard size={16} />
+    </button>
+
+    <button className="icon-btn" onClick={() => handleSpeak(m.text)}>
+      {isSpeaking ? <Square size={16} /> : <Volume2 size={16} />}
+    </button>
+    <button
+  className="icon-btn"
+  onClick={() => handleDownloadPdf(m.text, idx)}
+>
+  <Download size={16} />
+</button>
+  </div>
+)}
+
+
+
+{m.sourceContent}
+
           </motion.div>
         ))}
 
@@ -302,6 +387,8 @@ export function Conversation() {
             <span></span><span></span><span></span>
           </div>
         )}
+        {toast && <div className="toast">{toast}</div>}
+
       </div>
       <footer className="footer">
         <QueryBox onSend={handleSendQuery} />
