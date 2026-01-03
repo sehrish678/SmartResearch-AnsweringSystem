@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiRefreshCw, FiMessageSquare, FiTrash2, FiAlertCircle, FiX } from 'react-icons/fi';
 import { ChatContext } from './ChatContext.jsx';
 import '../styles/navbar.css';
 import logoIcon from '../assets/icon.png';
+
 const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/mcp';
 
 function NavBar() {
   const { 
+    messages,
     setMessages, 
     currentSessionId, 
     setCurrentSessionId,
@@ -20,10 +22,40 @@ function NavBar() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [loadedSessions, setLoadedSessions] = useState(new Set());
 
   useEffect(() => {
     loadChatSessions();
   }, []);
+
+  // Watch for first bot response to update placeholder title
+  useEffect(() => {
+    const updatePlaceholderTitle = async () => {
+      // Find if current session is a placeholder
+      const currentSession = chatSessions.find(s => String(s.id) === String(currentSessionId));
+      if (!currentSession?.isPlaceholder) return;
+
+      // Check if we have at least one user message (don't wait for bot response)
+      const firstUserMessage = messages.find(msg => msg.sender === 'user');
+      if (!firstUserMessage) return;
+
+      const newTitle = firstUserMessage.text.slice(0, 50) + (firstUserMessage.text.length > 50 ? '...' : '');
+
+      // Update the session title locally immediately
+      setChatSessions(prev => prev.map(session => 
+        String(session.id) === String(currentSessionId)
+          ? { ...session, title: newTitle, isPlaceholder: false }
+          : session
+      ));
+
+      // Refresh from server after a delay to get the actual saved title
+      setTimeout(() => {
+        loadChatSessions();
+      }, 2000);
+    };
+
+    updatePlaceholderTitle();
+  }, [messages, currentSessionId, chatSessions, setChatSessions]);
 
   const loadChatSessions = async () => {
     setIsLoadingSessions(true);
@@ -117,22 +149,20 @@ function NavBar() {
           setCurrentSessionId(sessionId);
           setMessages([]);
           setChatSessions(prev => [
-  {
-    id: sessionId,
-    title: "New Chat",
-    isPlaceholder: true,
-    created_at: new Date().toISOString(),
-    last_message: ""
-  },
-  ...prev
-]);
-
+            {
+              id: sessionId,
+              title: "New Chat",
+              isPlaceholder: true,
+              created_at: new Date().toISOString(),
+              last_message: ""
+            },
+            ...prev
+          ]);
         }
       }
     } catch (error) {
       console.error('Error creating new chat:', error);
     }
-    //  loadChatSessions();
   };
 
   const handleDeleteSession = (sessionId, e) => {
@@ -176,6 +206,13 @@ function NavBar() {
         // Remove from local state
         setChatSessions(prev => prev.filter(session => String(session.id) !== String(sessionToDelete)));
         
+        // Remove from loaded sessions cache
+        setLoadedSessions(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(String(sessionToDelete));
+          return newSet;
+        });
+        
         // If current session is being deleted, switch to new chat
         if (String(currentSessionId) === String(sessionToDelete)) {
           setCurrentSessionId(null);
@@ -201,8 +238,14 @@ function NavBar() {
   };
 
   const handleLoadSession = async (sessionId) => {
+    // If already the current session, don't reload
+    if (String(currentSessionId) === String(sessionId)) {
+      console.log('Session already active, skipping reload');
+      return;
+    }
+
     console.log('Loading session:', sessionId);
-  ///  loadChatSessions();
+
     try {
       const token = localStorage.getItem('token');
 
@@ -258,45 +301,16 @@ function NavBar() {
         }
         if (!Array.isArray(refs)) refs = [];
 
-        let sourceContent = null;
-        if (refs.length > 0) {
-          sourceContent = (
-            <div className="references-list">
-              {refs.map((ref, i) => (
-                <div key={i} className="source-link">
-                  <span className="source-label">📚 Source {i + 1}:</span>
-                  {ref.startsWith('http') || ref.includes('doi.org') ? (
-                    <a href={ref} target="_blank" rel="noopener noreferrer" className="source-text">
-                      {ref}
-                    </a>
-                  ) : (
-                    <span className="source-text">{ref}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          );
-        }
-
         let displayedAnswer = botText;
+        let conclusionText = null;
+        
         if (mode === 'deep' && typeof botText === 'string') {
           let cleanedText = botText.replace(/References are listed below\.[\s\S]*?(?=Conclusion:|$)/i, '').trim();
 
           if (cleanedText.includes('Conclusion:')) {
             const parts = cleanedText.split(/Conclusion:\s*/i);
-            const preConclusion = parts[0].trim();
-            const conclusionText = parts.slice(1).join('').trim();
-
-            displayedAnswer = (
-              <>
-                {preConclusion && preConclusion}
-                {conclusionText && (
-                  <div className="conclusion-highlight">
-                    <strong>📌 Conclusion:</strong> {conclusionText}
-                  </div>
-                )}
-              </>
-            );
+            displayedAnswer = parts[0].trim();
+            conclusionText = parts.slice(1).join('').trim();
           }
         }
 
@@ -312,17 +326,22 @@ function NavBar() {
           id: Date.now() + idx * 2 + 1,
           sender: 'bot',
           text: displayedAnswer,
+          conclusionText: conclusionText,
           time: entry.time || entry.created_at || null,
-          sourceContent,
+          references: refs,
           original_query,
           corrected_query,
           was_corrected,
           mode,
+          isNew: false // Don't animate old messages
         });
       });
 
       setMessages(loadedMessages);
       setCurrentSessionId(String(sessionId));
+      
+      // Mark this session as loaded
+      setLoadedSessions(prev => new Set(prev).add(String(sessionId)));
     } catch (error) {
       console.error('Error loading session:', error);
       alert('Failed to load chat history. Please try again.');
@@ -476,13 +495,13 @@ function NavBar() {
                     onClick={() => handleLoadSession(session.id)}
                   >
                     <div className="history-item-content">
-         <div
-  className={`history-title-text ${
-    session.isPlaceholder ? "placeholder-title" : ""
-  }`}
->
-  {session.title || "New Chat"}
-</div>
+                      <div
+                        className={`history-title-text ${
+                          session.isPlaceholder ? "placeholder-title" : ""
+                        }`}
+                      >
+                        {session.title || "New Chat"}
+                      </div>
                       <div className="history-preview">
                         {/* {session.last_message || 'No messages'} */}
                       </div>
@@ -513,4 +532,4 @@ function NavBar() {
   );
 }
 
-export default NavBar;   
+export default NavBar;

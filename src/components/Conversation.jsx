@@ -16,10 +16,10 @@ export function Conversation() {
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
-const showToast = (msg) => {
-  setToast(msg);
-  setTimeout(() => setToast(null), 1200);
-};
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 1200);
+  };
 
   async function handleSendQuery(raw, mode = 'simple') {
     const text = raw.trim();
@@ -99,29 +99,10 @@ const showToast = (msg) => {
       // References
       let refs = Array.isArray(answerData.references) ? answerData.references : [];
 
-      // Build source content
-      let sourceContent = null;
-      if (refs.length > 0) {
-        sourceContent = (
-          <div className="references-list">
-            {refs.map((ref, idx) => (
-              <div key={idx} className="source-link">
-                <span className="source-label">📚 Source {idx + 1}:</span>
-                {ref.startsWith('http') || ref.includes('doi.org') ? (
-                  <a href={ref} target="_blank" rel="noopener noreferrer" className="source-text">
-                    {ref}
-                  </a>
-                ) : (
-                  <span className="source-text">{ref}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        );
-      }
-
-      // Highlight conclusion in deep mode
+      // Highlight conclusion in deep mode - store as plain text for typewriter
       let displayedAnswer = answerText;
+      let conclusionText = null;
+      
       if (mode === 'deep' && typeof answerText === 'string') {
         // Remove references block if present
         let cleanedText = answerText.replace(/References are listed below\.[\s\S]*?(?=Conclusion:|$)/i, '').trim();
@@ -129,20 +110,8 @@ const showToast = (msg) => {
         // Split on Conclusion:
         if (cleanedText.includes('Conclusion:')) {
           const parts = cleanedText.split(/Conclusion:\s*/i);
-          const preConclusion = parts[0].trim();
-          const conclusionText = parts.slice(1).join('').trim();
-
-          displayedAnswer = (
-            <>
-              {preConclusion && <TypewriterText text={preConclusion} />}
-              {conclusionText && (
-                <div className="conclusion-highlight">
-                  <strong>📌 Conclusion:</strong>{' '}
-                  <TypewriterText text={conclusionText} />
-                </div>
-              )}
-            </>
-          );
+          displayedAnswer = parts[0].trim();
+          conclusionText = parts.slice(1).join('').trim();
         }
       }
 
@@ -150,14 +119,13 @@ const showToast = (msg) => {
         id: Date.now() + 1,
         sender: 'bot',
         text: displayedAnswer,
+        conclusionText: conclusionText,
         original_query: answerData.original_query,
         corrected_query: answerData.corrected_query,
-        was_corrected:
-          answerData.original_query &&
-          answerData.corrected_query &&
-          answerData.original_query !== answerData.corrected_query,
+        was_corrected: answerData.original_query && answerData.corrected_query && answerData.original_query !== answerData.corrected_query,
         mode,
-        sourceContent
+        references: refs,
+        isNew: true // Mark as new message for typewriter effect
       };
 
       setMessages(prev => [...prev, botMsg]);
@@ -186,59 +154,96 @@ const showToast = (msg) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  const handleDownloadPdf = (text, index) => {
-  if (!text) return;
 
-  const doc = new jsPDF();
+  // Mark new messages as seen after they appear
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMessages(prev => prev.map(msg => ({ ...msg, isNew: false })));
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [messages.length, setMessages]);
 
-  const content =
-    typeof text === "string"
-      ? text
-      : (text.props?.children || "Chat response");
+  const handleDownloadPdf = (message, index) => {
+    if (!message.text) return;
 
-  doc.setFont("Helvetica", "normal");
-  doc.setFontSize(12);
+    const doc = new jsPDF();
 
-  const lines = doc.splitTextToSize(content, 180); // wrap text
-  doc.text(lines, 15, 20);
+    let content = typeof message.text === "string" ? message.text : (message.text.props?.children || "Chat response");
+    
+    // Add conclusion if exists
+    if (message.conclusionText) {
+      content += "\n\nConclusion: " + message.conclusionText;
+    }
 
-  doc.save(`chat-response-${index + 1}.pdf`);
-};
+    // Add references if exist
+    if (message.references && message.references.length > 0) {
+      content += '\n\nReferences:\n';
+      message.references.forEach((ref, idx) => {
+        content += `${idx + 1}. ${ref}\n`;
+      });
+    }
 
-const handleCopy = (text) => {
-  if (!text) return;
-  navigator.clipboard.writeText(
-    typeof text === "string" ? text : (text.props?.children || "")
-  );
-  showToast("Copied!");
-};
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(12);
 
-const [isSpeaking, setIsSpeaking] = useState(false);
+    const lines = doc.splitTextToSize(content, 180);
+    doc.text(lines, 15, 20);
 
-const handleSpeak = (text) => {
-  if (!text) return;
+    doc.save(`chat-response-${index + 1}.pdf`);
+  };
 
-  // Stop if already speaking
-  if (isSpeaking) {
+  const handleCopy = (message) => {
+    if (!message.text) return;
+    let content = typeof message.text === "string" ? message.text : (message.text.props?.children || "");
+    
+    // Add conclusion if exists
+    if (message.conclusionText) {
+      content += "\n\nConclusion: " + message.conclusionText;
+    }
+
+    // Add references if exist
+    if (message.references && message.references.length > 0) {
+      content += '\n\nReferences:\n';
+      message.references.forEach((ref, idx) => {
+        content += `${idx + 1}. ${ref}\n`;
+      });
+    }
+    
+    navigator.clipboard.writeText(content);
+    showToast("Copied!");
+  };
+
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const handleSpeak = (message) => {
+    if (!message.text) return;
+
+    // Stop if already speaking
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
     window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-    return;
-  }
+    
+    let content = typeof message.text === "string" ? message.text : (message.text.props?.children || "");
+    
+    // Add conclusion if exists
+    if (message.conclusionText) {
+      content += ". Conclusion: " + message.conclusionText;
+    }
+    
+    const utter = new SpeechSynthesisUtterance(content);
+    utter.rate = 1;
+    utter.pitch = 1;
+    utter.lang = "en-US";
 
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(
-    typeof text === "string" ? text : (text.props?.children || "")
-  );
-  utter.rate = 1;
-  utter.pitch = 1;
-  utter.lang = "en-US";
+    utter.onend = () => setIsSpeaking(false);
 
-  utter.onend = () => setIsSpeaking(false);
-
-  setIsSpeaking(true);
-  window.speechSynthesis.speak(utter);
-};
-
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utter);
+  };
 
   return (
     <div className="conversation">
@@ -347,38 +352,67 @@ const handleSpeak = (text) => {
                 <TypewriterText text={`"${m.corrected_query}"`} /> 
               </div>
             )}
-  <div className="message-text">
-  {m.sender === 'bot' && idx === messages.length - 1 ? (
-    <TypewriterText text={typeof m.text === 'string' ? m.text : ''} />
-  ) : (
-    m.text
-  )}
-</div>
+            
+            <div className="message-text">
+              {m.sender === 'bot' && m.isNew && !isLoading ? (
+                <>
+                  <TypewriterText text={typeof m.text === 'string' ? m.text : ''} />
+                  {m.conclusionText && (
+                    <div className="conclusion-highlight">
+                      <strong>📌 Conclusion:</strong>{' '}
+                      <TypewriterText text={m.conclusionText} delay={typeof m.text === 'string' ? m.text.length * 20 : 0} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {m.text}
+                  {m.conclusionText && (
+                    <div className="conclusion-highlight">
+                      <strong>📌 Conclusion:</strong> {m.conclusionText}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
 
-{/* action buttons */}
-{m.sender === "bot" && (
-  <div className="message-actions">
-    
-    <button className="icon-btn" onClick={() => handleCopy(m.text)}>
-      <Clipboard size={16} />
-    </button>
+            {/* action buttons */}
+            {m.sender === "bot" && (
+              <div className="message-actions">
+                <button className="icon-btn" onClick={() => handleCopy(m)}>
+                  <Clipboard size={16} />
+                </button>
 
-    <button className="icon-btn" onClick={() => handleSpeak(m.text)}>
-      {isSpeaking ? <Square size={16} /> : <Volume2 size={16} />}
-    </button>
-    <button
-  className="icon-btn"
-  onClick={() => handleDownloadPdf(m.text, idx)}
->
-  <Download size={16} />
-</button>
-  </div>
-)}
+                <button className="icon-btn" onClick={() => handleSpeak(m)}>
+                  {isSpeaking ? <Square size={16} /> : <Volume2 size={16} />}
+                </button>
+                
+                <button
+                  className="icon-btn"
+                  onClick={() => handleDownloadPdf(m, idx)}
+                >
+                  <Download size={16} />
+                </button>
+              </div>
+            )}
 
-
-
-{m.sourceContent}
-
+            {/* Sources appear AFTER the message */}
+            {m.references && m.references.length > 0 && (
+              <div className="references-list">
+                {m.references.map((ref, refIdx) => (
+                  <div key={refIdx} className="source-link">
+                    <span className="source-label">📚 Source {refIdx + 1}:</span>
+                    {ref.startsWith('http') || ref.includes('doi.org') ? (
+                      <a href={ref} target="_blank" rel="noopener noreferrer" className="source-text">
+                        {ref}
+                      </a>
+                    ) : (
+                      <span className="source-text">{ref}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         ))}
 
@@ -388,8 +422,8 @@ const handleSpeak = (text) => {
           </div>
         )}
         {toast && <div className="toast">{toast}</div>}
-
       </div>
+      
       <footer className="footer">
         <QueryBox onSend={handleSendQuery} />
       </footer>
