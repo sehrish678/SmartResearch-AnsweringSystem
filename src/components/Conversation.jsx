@@ -99,6 +99,27 @@ export function Conversation() {
       // References
       let refs = Array.isArray(answerData.references) ? answerData.references : [];
 
+      // Build source content
+      let sourceContent = null;
+      if (refs.length > 0) {
+        sourceContent = (
+          <div className="references-list">
+            {refs.map((ref, idx) => (
+              <div key={idx} className="source-link">
+                <span className="source-label">📚 Source {idx + 1}:</span>
+                {ref.startsWith('http') || ref.includes('doi.org') ? (
+                  <a href={ref} target="_blank" rel="noopener noreferrer" className="source-text">
+                    {ref}
+                  </a>
+                ) : (
+                  <span className="source-text">{ref}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
+
       // Highlight conclusion in deep mode - store as plain text for typewriter
       let displayedAnswer = answerText;
       let conclusionText = null;
@@ -119,13 +140,15 @@ export function Conversation() {
         id: Date.now() + 1,
         sender: 'bot',
         text: displayedAnswer,
-        conclusionText: conclusionText,
+        conclusionText: conclusionText, // Store conclusion separately
         original_query: answerData.original_query,
         corrected_query: answerData.corrected_query,
-        was_corrected: answerData.original_query && answerData.corrected_query && answerData.original_query !== answerData.corrected_query,
+        was_corrected:
+          answerData.original_query &&
+          answerData.corrected_query &&
+          answerData.original_query !== answerData.corrected_query,
         mode,
-        references: refs,
-        isNew: true // Mark as new message for typewriter effect
+        sourceContent
       };
 
       setMessages(prev => [...prev, botMsg]);
@@ -155,32 +178,16 @@ export function Conversation() {
     scrollToBottom();
   }, [messages]);
 
-  // Mark new messages as seen after they appear
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMessages(prev => prev.map(msg => ({ ...msg, isNew: false })));
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [messages.length, setMessages]);
-
-  const handleDownloadPdf = (message, index) => {
-    if (!message.text) return;
+  const handleDownloadPdf = (text, conclusionText, index) => {
+    if (!text) return;
 
     const doc = new jsPDF();
 
-    let content = typeof message.text === "string" ? message.text : (message.text.props?.children || "Chat response");
+    let content = typeof text === "string" ? text : (text.props?.children || "Chat response");
     
     // Add conclusion if exists
-    if (message.conclusionText) {
-      content += "\n\nConclusion: " + message.conclusionText;
-    }
-
-    // Add references if exist
-    if (message.references && message.references.length > 0) {
-      content += '\n\nReferences:\n';
-      message.references.forEach((ref, idx) => {
-        content += `${idx + 1}. ${ref}\n`;
-      });
+    if (conclusionText) {
+      content += "\n\nConclusion: " + conclusionText;
     }
 
     doc.setFont("Helvetica", "normal");
@@ -192,21 +199,13 @@ export function Conversation() {
     doc.save(`chat-response-${index + 1}.pdf`);
   };
 
-  const handleCopy = (message) => {
-    if (!message.text) return;
-    let content = typeof message.text === "string" ? message.text : (message.text.props?.children || "");
+  const handleCopy = (text, conclusionText) => {
+    if (!text) return;
+    let content = typeof text === "string" ? text : (text.props?.children || "");
     
     // Add conclusion if exists
-    if (message.conclusionText) {
-      content += "\n\nConclusion: " + message.conclusionText;
-    }
-
-    // Add references if exist
-    if (message.references && message.references.length > 0) {
-      content += '\n\nReferences:\n';
-      message.references.forEach((ref, idx) => {
-        content += `${idx + 1}. ${ref}\n`;
-      });
+    if (conclusionText) {
+      content += "\n\nConclusion: " + conclusionText;
     }
     
     navigator.clipboard.writeText(content);
@@ -215,8 +214,8 @@ export function Conversation() {
 
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  const handleSpeak = (message) => {
-    if (!message.text) return;
+  const handleSpeak = (text, conclusionText) => {
+    if (!text) return;
 
     // Stop if already speaking
     if (isSpeaking) {
@@ -227,11 +226,11 @@ export function Conversation() {
 
     window.speechSynthesis.cancel();
     
-    let content = typeof message.text === "string" ? message.text : (message.text.props?.children || "");
+    let content = typeof text === "string" ? text : (text.props?.children || "");
     
     // Add conclusion if exists
-    if (message.conclusionText) {
-      content += ". Conclusion: " + message.conclusionText;
+    if (conclusionText) {
+      content += ". Conclusion: " + conclusionText;
     }
     
     const utter = new SpeechSynthesisUtterance(content);
@@ -354,7 +353,7 @@ export function Conversation() {
             )}
             
             <div className="message-text">
-              {m.sender === 'bot' && m.isNew && !isLoading ? (
+              {m.sender === 'bot' && idx === messages.length - 1 && !isLoading ? (
                 <>
                   <TypewriterText text={typeof m.text === 'string' ? m.text : ''} />
                   {m.conclusionText && (
@@ -379,17 +378,17 @@ export function Conversation() {
             {/* action buttons */}
             {m.sender === "bot" && (
               <div className="message-actions">
-                <button className="icon-btn" onClick={() => handleCopy(m)}>
+                <button className="icon-btn" onClick={() => handleCopy(m.text, m.conclusionText)}>
                   <Clipboard size={16} />
                 </button>
 
-                <button className="icon-btn" onClick={() => handleSpeak(m)}>
+                <button className="icon-btn" onClick={() => handleSpeak(m.text, m.conclusionText)}>
                   {isSpeaking ? <Square size={16} /> : <Volume2 size={16} />}
                 </button>
                 
                 <button
                   className="icon-btn"
-                  onClick={() => handleDownloadPdf(m, idx)}
+                  onClick={() => handleDownloadPdf(m.text, m.conclusionText, idx)}
                 >
                   <Download size={16} />
                 </button>
@@ -397,22 +396,7 @@ export function Conversation() {
             )}
 
             {/* Sources appear AFTER the message */}
-            {m.references && m.references.length > 0 && (
-              <div className="references-list">
-                {m.references.map((ref, refIdx) => (
-                  <div key={refIdx} className="source-link">
-                    <span className="source-label">📚 Source {refIdx + 1}:</span>
-                    {ref.startsWith('http') || ref.includes('doi.org') ? (
-                      <a href={ref} target="_blank" rel="noopener noreferrer" className="source-text">
-                        {ref}
-                      </a>
-                    ) : (
-                      <span className="source-text">{ref}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            {m.sourceContent}
           </motion.div>
         ))}
 
