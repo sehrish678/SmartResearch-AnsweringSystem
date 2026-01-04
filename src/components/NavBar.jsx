@@ -6,7 +6,7 @@ import { ChatContext } from './ChatContext.jsx';
 import '../styles/navbar.css';
 import logoIcon from '../assets/icon.png';
 
-const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/mcp';
+const API_BASE_URL = 'https://amirhashmi017-mcp-server-and-langgraph-agent.hf.space/mcp';
 
 function NavBar() {
   const { 

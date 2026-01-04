@@ -3,7 +3,7 @@ import { createContext, useState } from 'react';
 // Create the context
 const ChatContext = createContext();
 
-const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/mcp';
+const API_BASE_URL = 'https://amirhashmi017-mcp-server-and-langgraph-agent.hf.space/mcp';
 
 // Create the provider
 export function ChatProvider({ children }) {
