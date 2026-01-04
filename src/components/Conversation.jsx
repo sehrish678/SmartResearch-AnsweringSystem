@@ -7,7 +7,7 @@ import { TypewriterText } from './TypewriterText.jsx';
 import { jsPDF } from "jspdf";
 import { Clipboard, Volume2, Square, Download } from "lucide-react";
 
-const API_BASE_URL = 'https://amirhashmi017-mcp-server-and-langgraph-agent.hf.space/mcp';
+const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/messages';
 
 export function Conversation() {
   const { messages, setMessages, currentSessionId } = useContext(ChatContext);
@@ -48,7 +48,7 @@ export function Conversation() {
             }
           }
         : {
-            name: "smart_message_query",
+            name: "smart_send_message",
             arguments: {
               token,
               question: text,
@@ -78,7 +78,6 @@ export function Conversation() {
       const rawData = await response.json();
       console.debug('Raw API response:', rawData);
 
-      // Parse the nested JSON structure
       let answerData = null;
       
       if (rawData?.result?.content?.[0]?.text) {
@@ -96,10 +95,8 @@ export function Conversation() {
 
       const answerText = answerData.answer || answerData.content || answerData.text || '';
 
-      // References
       let refs = Array.isArray(answerData.references) ? answerData.references : [];
 
-      // Build source content
       let sourceContent = null;
       if (refs.length > 0) {
         sourceContent = (
@@ -120,27 +117,38 @@ export function Conversation() {
         );
       }
 
-      // Highlight conclusion in deep mode - store as plain text for typewriter
       let displayedAnswer = answerText;
       let conclusionText = null;
       
       if (mode === 'deep' && typeof answerText === 'string') {
-        // Remove references block if present
-        let cleanedText = answerText.replace(/References are listed below\.[\s\S]*?(?=Conclusion:|$)/i, '').trim();
+        let cleanedText = answerText.replace(/References are listed below\.[\s\S]*$/i, '').trim();
+        cleanedText = cleanedText.replace(/References are listed below\.[\s\S]*?(?=\n\n|Conclusion:|$)/i, '').trim();
 
-        // Split on Conclusion:
-        if (cleanedText.includes('Conclusion:')) {
-          const parts = cleanedText.split(/Conclusion:\s*/i);
-          displayedAnswer = parts[0].trim();
-          conclusionText = parts.slice(1).join('').trim();
+        const conclusionMatch = cleanedText.match(/Conclusion\s*:\s*/i);
+        if (conclusionMatch) {
+          const splitIndex = conclusionMatch.index + conclusionMatch[0].length;
+          displayedAnswer = cleanedText.substring(0, conclusionMatch.index).trim();
+          conclusionText = cleanedText.substring(splitIndex).trim();
+        } else {
+          displayedAnswer = cleanedText;
         }
+      }
+
+      let conclusionContent = null;
+      if (conclusionText) {
+        conclusionContent = (
+          <div className="conclusion-highlight">
+            <strong>📌 Conclusion:</strong> {conclusionText}
+          </div>
+        );
       }
 
       const botMsg = {
         id: Date.now() + 1,
         sender: 'bot',
         text: displayedAnswer,
-        conclusionText: conclusionText, // Store conclusion separately
+        conclusionText: conclusionText,
+        conclusionContent: conclusionContent,
         original_query: answerData.original_query,
         corrected_query: answerData.corrected_query,
         was_corrected:
@@ -148,7 +156,8 @@ export function Conversation() {
           answerData.corrected_query &&
           answerData.original_query !== answerData.corrected_query,
         mode,
-        sourceContent
+        sourceContent,
+        isNew: true 
       };
 
       setMessages(prev => [...prev, botMsg]);
@@ -185,7 +194,6 @@ export function Conversation() {
 
     let content = typeof text === "string" ? text : (text.props?.children || "Chat response");
     
-    // Add conclusion if exists
     if (conclusionText) {
       content += "\n\nConclusion: " + conclusionText;
     }
@@ -203,7 +211,6 @@ export function Conversation() {
     if (!text) return;
     let content = typeof text === "string" ? text : (text.props?.children || "");
     
-    // Add conclusion if exists
     if (conclusionText) {
       content += "\n\nConclusion: " + conclusionText;
     }
@@ -217,7 +224,6 @@ export function Conversation() {
   const handleSpeak = (text, conclusionText) => {
     if (!text) return;
 
-    // Stop if already speaking
     if (isSpeaking) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
@@ -228,7 +234,6 @@ export function Conversation() {
     
     let content = typeof text === "string" ? text : (text.props?.children || "");
     
-    // Add conclusion if exists
     if (conclusionText) {
       content += ". Conclusion: " + conclusionText;
     }
@@ -257,7 +262,6 @@ export function Conversation() {
             transition={{ duration: 0.5 }}
           >
             <motion.div className="welcome-content">
-              {/* Animated Bot Character */}
               <motion.div
                 className="bot-character"
                 animate={{ y: [0, -10, 0] }}
@@ -330,7 +334,6 @@ export function Conversation() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1, duration: 0.5 }}
               >
-                {/* <p>Start typing below to begin!</p> */}
               </motion.div>
             </motion.div>
           </motion.div>
@@ -345,15 +348,25 @@ export function Conversation() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            {m.was_corrected && (
-              <div className="correction-box">
-                <span className="did-you-mean">Did you mean: </span>
-                <TypewriterText text={`"${m.corrected_query}"`} /> 
-              </div>
+            {/* Show correction either as pre-built JSX or with TypewriterText for new messages */}
+            {m.correctionContent ? (
+              m.correctionContent
+            ) : (
+              m.was_corrected && (
+                <div className="correction-box">
+                  <span className="did-you-mean">Did you mean: </span>
+                  {m.sender === 'bot' && m.isNew !== false ? (
+                    <TypewriterText text={`"${m.corrected_query}"`} /> 
+                  ) : (
+                    <span>"{m.corrected_query}"</span>
+                  )}
+                </div>
+              )
             )}
             
             <div className="message-text">
-              {m.sender === 'bot' && idx === messages.length - 1 && !isLoading ? (
+              {/* Animate only the last bot message that's new */}
+              {m.sender === 'bot' && idx === messages.length - 1 && !isLoading && m.isNew !== false ? (
                 <>
                   <TypewriterText text={typeof m.text === 'string' ? m.text : ''} />
                   {m.conclusionText && (
@@ -366,11 +379,7 @@ export function Conversation() {
               ) : (
                 <>
                   {m.text}
-                  {m.conclusionText && (
-                    <div className="conclusion-highlight">
-                      <strong>📌 Conclusion:</strong> {m.conclusionText}
-                    </div>
-                  )}
+                  {m.conclusionContent}
                 </>
               )}
             </div>

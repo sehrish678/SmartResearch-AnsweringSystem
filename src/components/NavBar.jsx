@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiRefreshCw, FiMessageSquare, FiTrash2, FiAlertCircle, FiX } from 'react-icons/fi';
@@ -9,15 +9,15 @@ import logoIcon from '../assets/icon.png';
 const API_BASE_URL = 'https://amirhashmi017-mcp-server-and-langgraph-agent.hf.space/mcp';
 
 function NavBar() {
-  const { 
+  const {
     messages,
-    setMessages, 
-    currentSessionId, 
+    setMessages,
+    currentSessionId,
     setCurrentSessionId,
     chatSessions,
-    setChatSessions 
+    setChatSessions
   } = useContext(ChatContext);
-  
+ 
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState(null);
@@ -28,27 +28,22 @@ function NavBar() {
     loadChatSessions();
   }, []);
 
-  // Watch for first bot response to update placeholder title
   useEffect(() => {
     const updatePlaceholderTitle = async () => {
-      // Find if current session is a placeholder
       const currentSession = chatSessions.find(s => String(s.id) === String(currentSessionId));
       if (!currentSession?.isPlaceholder) return;
 
-      // Check if we have at least one user message (don't wait for bot response)
       const firstUserMessage = messages.find(msg => msg.sender === 'user');
       if (!firstUserMessage) return;
 
       const newTitle = firstUserMessage.text.slice(0, 50) + (firstUserMessage.text.length > 50 ? '...' : '');
 
-      // Update the session title locally immediately
-      setChatSessions(prev => prev.map(session => 
+      setChatSessions(prev => prev.map(session =>
         String(session.id) === String(currentSessionId)
           ? { ...session, title: newTitle, isPlaceholder: false }
           : session
       ));
 
-      // Refresh from server after a delay to get the actual saved title
       setTimeout(() => {
         loadChatSessions();
       }, 2000);
@@ -80,7 +75,7 @@ function NavBar() {
       if (response.ok) {
         const data = await response.json();
         console.log('Raw sessions response:', data);
-        
+       
         let sessions = [];
         if (data?.result?.content?.[0]?.text) {
           try {
@@ -90,7 +85,7 @@ function NavBar() {
             console.error('Error parsing sessions:', e);
           }
         }
-        
+       
         const formattedSessions = sessions
           .map(s => ({
             id: s.session_id,
@@ -98,8 +93,7 @@ function NavBar() {
             created_at: s.created_at,
             last_message: s.last_message || ''
           }))
-          .filter(s => s.title && s.title.trim() !== ''); 
-
+          .filter(s => s.title && s.title.trim() !== '');
         setChatSessions(formattedSessions);
       }
     } catch (error) {
@@ -134,7 +128,7 @@ function NavBar() {
       if (response.ok) {
         const data = await response.json();
         console.log('New chat response:', data);
-        
+       
         let sessionId = null;
         if (data?.result?.content?.[0]?.text) {
           try {
@@ -144,7 +138,7 @@ function NavBar() {
             sessionId = data?.result?.session_id || data?.result?.id;
           }
         }
-        
+       
         if (sessionId) {
           setCurrentSessionId(sessionId);
           setMessages([]);
@@ -173,7 +167,7 @@ function NavBar() {
 
   const confirmDelete = async () => {
     if (!sessionToDelete) return;
-    
+   
     setIsDeleting(true);
     try {
       const token = localStorage.getItem('token');
@@ -202,23 +196,20 @@ function NavBar() {
       if (response.ok) {
         const data = await response.json();
         console.log('Delete response:', data);
-        
-        // Remove from local state
+       
         setChatSessions(prev => prev.filter(session => String(session.id) !== String(sessionToDelete)));
-        
-        // Remove from loaded sessions cache
+       
         setLoadedSessions(prev => {
           const newSet = new Set(prev);
           newSet.delete(String(sessionToDelete));
           return newSet;
         });
-        
-        // If current session is being deleted, switch to new chat
+       
         if (String(currentSessionId) === String(sessionToDelete)) {
           setCurrentSessionId(null);
           setMessages([]);
         }
-        
+       
         setShowDeleteConfirm(false);
         setSessionToDelete(null);
       } else {
@@ -238,7 +229,6 @@ function NavBar() {
   };
 
   const handleLoadSession = async (sessionId) => {
-    // If already the current session, don't reload
     if (String(currentSessionId) === String(sessionId)) {
       console.log('Session already active, skipping reload');
       return;
@@ -281,6 +271,7 @@ function NavBar() {
       const loadedMessages = [];
 
       history.forEach((entry, idx) => {
+        // User message
         loadedMessages.push({
           id: Date.now() + idx * 2,
           sender: 'user',
@@ -289,7 +280,7 @@ function NavBar() {
         });
 
         let botText = entry.content || entry.answer || entry.text || '';
-        let mode = entry.mode || 'simple'; 
+        let mode = entry.mode || 'simple';
 
         let refs = entry.references || [];
         if (typeof refs === 'string') {
@@ -303,14 +294,19 @@ function NavBar() {
 
         let displayedAnswer = botText;
         let conclusionText = null;
-        
+        let correctionContent = null;
+       
         if (mode === 'deep' && typeof botText === 'string') {
-          let cleanedText = botText.replace(/References are listed below\.[\s\S]*?(?=Conclusion:|$)/i, '').trim();
+          let cleanedText = botText.replace(/References are listed below\.[\s\S]*$/i, '').trim();
+          cleanedText = cleanedText.replace(/References are listed below\.[\s\S]*?(?=\n\n|Conclusion:|$)/i, '').trim();
 
-          if (cleanedText.includes('Conclusion:')) {
-            const parts = cleanedText.split(/Conclusion:\s*/i);
-            displayedAnswer = parts[0].trim();
-            conclusionText = parts.slice(1).join('').trim();
+          const conclusionMatch = cleanedText.match(/Conclusion\s*:\s*/i);
+          if (conclusionMatch) {
+            const splitIndex = conclusionMatch.index + conclusionMatch[0].length;
+            displayedAnswer = cleanedText.substring(0, conclusionMatch.index).trim();
+            conclusionText = cleanedText.substring(splitIndex).trim();
+          } else {
+            displayedAnswer = cleanedText;
           }
         }
 
@@ -320,6 +316,42 @@ function NavBar() {
 
         if (original_query && corrected_query && original_query !== corrected_query) {
           was_corrected = true;
+          // Pre-build correction JSX
+          correctionContent = (
+            <div className="correction-box">
+              <span className="did-you-mean">Did you mean: </span>
+              <span>"{corrected_query}"</span>
+            </div>
+          );
+        }
+
+        let sourceContent = null;
+        if (refs.length > 0) {
+          sourceContent = (
+            <div className="references-list">
+              {refs.map((ref, refIdx) => (
+                <div key={refIdx} className="source-link">
+                  <span className="source-label">📚 Source {refIdx + 1}:</span>
+                  {ref.startsWith('http') || ref.includes('doi.org') ? (
+                    <a href={ref} target="_blank" rel="noopener noreferrer" className="source-text">
+                      {ref}
+                    </a>
+                  ) : (
+                    <span className="source-text">{ref}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        }
+
+        let conclusionContent = null;
+        if (conclusionText) {
+          conclusionContent = (
+            <div className="conclusion-highlight">
+              <strong>📌 Conclusion:</strong> {conclusionText}
+            </div>
+          );
         }
 
         loadedMessages.push({
@@ -327,20 +359,22 @@ function NavBar() {
           sender: 'bot',
           text: displayedAnswer,
           conclusionText: conclusionText,
+          conclusionContent: conclusionContent,
+          correctionContent: correctionContent,
           time: entry.time || entry.created_at || null,
           references: refs,
           original_query,
           corrected_query,
           was_corrected,
           mode,
-          isNew: false // Don't animate old messages
+          sourceContent,
+          isNew: false
         });
       });
 
       setMessages(loadedMessages);
       setCurrentSessionId(String(sessionId));
-      
-      // Mark this session as loaded
+     
       setLoadedSessions(prev => new Set(prev).add(String(sessionId)));
     } catch (error) {
       console.error('Error loading session:', error);
@@ -353,7 +387,6 @@ function NavBar() {
     return session?.title || 'this chat';
   };
 
-  // Delete Modal Component
   const DeleteModal = () => {
     if (!showDeleteConfirm) return null;
 
@@ -380,7 +413,7 @@ function NavBar() {
               >
                 <div className="delete-modal-header">
                   <FiAlertCircle className="delete-modal-icon" />
-                  <button 
+                  <button
                     className="delete-modal-close"
                     onClick={cancelDelete}
                     disabled={isDeleting}
@@ -388,7 +421,7 @@ function NavBar() {
                     <FiX size={20} />
                   </button>
                 </div>
-                
+               
                 <div className="delete-modal-content">
                   <h3 className="delete-modal-title">Delete Chat?</h3>
                   <p className="delete-modal-text">
@@ -441,7 +474,7 @@ function NavBar() {
 
   return (
     <>
-      <motion.nav 
+      <motion.nav
         className="navbar"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -454,9 +487,9 @@ function NavBar() {
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
-            <img 
-              src={logoIcon} 
-              alt="Smart Research Logo" 
+            <img
+              src={logoIcon}
+              alt="Smart Research Logo"
               className="logo-image"
             />
           </motion.div>
@@ -477,7 +510,7 @@ function NavBar() {
 
           <div className="chat-history-section">
             <h3 className="history-title">Chat History</h3>
-            
+           
             {isLoadingSessions ? (
               <div className="loading-text">Loading...</div>
             ) : chatSessions.length === 0 ? (
