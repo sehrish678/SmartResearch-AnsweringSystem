@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiRefreshCw, FiMessageSquare, FiTrash2, FiAlertCircle, FiX } from 'react-icons/fi';
+import { FiRefreshCw, FiMessageSquare, FiTrash2, FiAlertCircle, FiX, FiLogOut } from 'react-icons/fi';
 import { ChatContext } from './ChatContext.jsx';
 import '../styles/navbar.css';
 import logoIcon from '../assets/icon.png';
@@ -23,10 +23,107 @@ function NavBar() {
   const [sessionToDelete, setSessionToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [loadedSessions, setLoadedSessions] = useState(new Set());
+  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     loadChatSessions();
+    getUserEmail();
   }, []);
+
+  const getUserEmail = async () => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      setUserEmail('user@example.com');
+      return;
+    }
+
+    try {
+      // Call API to get user info
+      const response = await fetch('https://amirhashmi017-mcp-server-and-langgraph-agent.hf.space/mcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: {
+            name: "volvox_auth_get_user",
+            arguments: { token }
+          },
+          id: 1
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('User info response:', data);
+        
+        // Extract email directly from result object
+        if (data?.result?.email) {
+          setUserEmail(data.result.email);
+          console.log('Email set to:', data.result.email);
+        } else if (data?.result?.content?.[0]?.text) {
+          // Fallback: try parsing content if result doesn't have email directly
+          try {
+            const userInfo = JSON.parse(data.result.content[0].text);
+            const email = userInfo.email || userInfo.user?.email || userInfo.data?.email;
+            
+            if (email && email.includes('@')) {
+              setUserEmail(email);
+            } else {
+              setUserEmail('user@example.com');
+            }
+          } catch (parseError) {
+            console.error('Error parsing user info:', parseError);
+            setUserEmail('user@example.com');
+          }
+        } else {
+          setUserEmail('user@example.com');
+        }
+      } else {
+        // Fallback: decode JWT to get user ID
+        const base64Url = token.split('.')[1];
+        if (base64Url) {
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          
+          const payload = JSON.parse(jsonPayload);
+          const userId = payload.sub || 'user';
+          setUserEmail(`${userId.substring(0, 8)}@user.com`);
+        } else {
+          setUserEmail('user@example.com');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      // Fallback to JWT user ID
+      try {
+        const base64Url = token.split('.')[1];
+        if (base64Url) {
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          
+          const payload = JSON.parse(jsonPayload);
+          const userId = payload.sub || 'user';
+          setUserEmail(`${userId.substring(0, 8)}@user.com`);
+        } else {
+          setUserEmail('user@example.com');
+        }
+      } catch (fallbackError) {
+        setUserEmail('user@example.com');
+      }
+    }
+  };
+
+  const getUserDisplayName = () => {
+    if (!userEmail) return 'User';
+    const name = userEmail.split('@')[0];
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  };
 
   useEffect(() => {
     const updatePlaceholderTitle = async () => {
@@ -382,6 +479,16 @@ function NavBar() {
     }
   };
 
+  const handleLogout = () => {
+    // Clear all localStorage data
+    localStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
+    localStorage.clear();
+    
+    // Redirect to login page
+    window.location.href = 'https://research-mcp-frontend-suit-alpha.vercel.app/';
+  };
+
   const getSessionTitle = () => {
     const session = chatSessions.find(s => String(s.id) === String(sessionToDelete));
     return session?.title || 'this chat';
@@ -556,7 +663,29 @@ function NavBar() {
         </div>
 
         <div className="nav-footer">
-          <p>© 2025 Smart Research</p>
+          <div className="user-profile-compact">
+            <motion.div 
+              className="user-avatar-small"
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              {getUserDisplayName().charAt(0).toUpperCase()}
+              <div className="avatar-status-dot"></div>
+            </motion.div>
+            <div className="user-info-compact">
+              <div className="user-name-compact">{getUserDisplayName()}</div>
+              <div className="user-email-compact">{userEmail}</div>
+            </div>
+            <motion.button
+              className="logout-icon-btn"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              title="Logout"
+            >
+              <FiLogOut size={20} />
+            </motion.button>
+          </div>
         </div>
       </motion.nav>
 

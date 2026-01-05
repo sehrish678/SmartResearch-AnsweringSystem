@@ -956,3 +956,170 @@
   color: #9a9a9a;
   opacity: 0.9;
 }
+/* Add these styles to your navbar.css file */
+
+/* Keep existing nav-footer styling and add user profile styles */
+.nav-footer {
+  /* Your existing footer styles remain the same */
+  margin-top: auto;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: #0a0a0a;
+}
+
+.user-profile-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(239, 106, 54, 0.08);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.user-profile-compact:hover {
+  background: rgba(239, 106, 54, 0.12);
+}
+
+.user-avatar-small {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef6a36 0%, #ff8c5a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(239, 106, 54, 0.4);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.avatar-status-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 11px;
+  height: 11px;
+  background: #22c55e;
+  border: 2.5px solid #0a0a0a;
+  border-radius: 50%;
+  animation: pulse-status 2s ease-in-out infinite;
+}
+
+@keyframes pulse-status {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(34, 197, 94, 0);
+  }
+}
+
+.user-info-compact {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.user-name-compact {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 3px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.user-email-compact {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.logout-icon-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 106, 54, 0.15);
+  color: #ff8c5a;
+  border: 1px solid rgba(239, 106, 54, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.logout-icon-btn:hover {
+  background: rgba(239, 106, 54, 0.25);
+  border-color: rgba(239, 106, 54, 0.5);
+  color: #ffaa7a;
+  transform: translateY(-1px);
+}
+
+.logout-icon-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+.logout-icon-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+  display: block;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .nav-footer {
+    padding: 0.65rem 0.85rem;
+  }
+  
+  .user-profile-compact {
+    padding: 0.5rem 0.65rem;
+    gap: 0.55rem;
+  }
+  
+  .user-avatar-small {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+  
+  .avatar-status-dot {
+    width: 10px;
+    height: 10px;
+    border-width: 2px;
+  }
+  
+  .user-name-compact {
+    font-size: 13px;
+  }
+  
+  .user-email-compact {
+    font-size: 10px;
+  }
+  
+  .logout-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .logout-icon-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}
