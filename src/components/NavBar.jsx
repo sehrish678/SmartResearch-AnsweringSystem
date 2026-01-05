@@ -58,12 +58,10 @@ function NavBar() {
         const data = await response.json();
         console.log('User info response:', data);
         
-        // Extract email directly from result object
         if (data?.result?.email) {
           setUserEmail(data.result.email);
           console.log('Email set to:', data.result.email);
         } else if (data?.result?.content?.[0]?.text) {
-          // Fallback: try parsing content if result doesn't have email directly
           try {
             const userInfo = JSON.parse(data.result.content[0].text);
             const email = userInfo.email || userInfo.user?.email || userInfo.data?.email;
@@ -81,7 +79,6 @@ function NavBar() {
           setUserEmail('user@example.com');
         }
       } else {
-        // Fallback: decode JWT to get user ID
         const base64Url = token.split('.')[1];
         if (base64Url) {
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -98,7 +95,6 @@ function NavBar() {
       }
     } catch (error) {
       console.error('Error fetching user info:', error);
-      // Fallback to JWT user ID
       try {
         const base64Url = token.split('.')[1];
         if (base64Url) {
