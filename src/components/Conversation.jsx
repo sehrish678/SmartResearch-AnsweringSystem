@@ -7,7 +7,7 @@ import { TypewriterText } from './TypewriterText.jsx';
 import { jsPDF } from "jspdf";
 import { Clipboard, Volume2, Square, Download } from "lucide-react";
 
-const API_BASE_URL = 'https://mcp-server-and-langgraph-agent-production.up.railway.app/messages';
+const API_BASE_URL = 'https://amirhashmi017-mcp-server-and-langgraph-agent.hf.space/mcp';
 
 export function Conversation() {
   const { messages, setMessages, currentSessionId } = useContext(ChatContext);
