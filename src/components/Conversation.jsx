@@ -10,15 +10,80 @@ import { Clipboard, Volume2, Square, Download } from "lucide-react";
 const API_BASE_URL = 'https://amirhashmi017-mcp-server-and-langgraph-agent.hf.space/mcp';
 
 export function Conversation() {
-  const { messages, setMessages, currentSessionId } = useContext(ChatContext);
+  const { messages, setMessages, currentSessionId, setCurrentSessionId, setChatSessions } = useContext(ChatContext);
   const [showWelcome, setShowWelcome] = useState(true);
   const chatPanelRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [sessionInitialized, setSessionInitialized] = useState(false);
 
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 1200);
+  };
+
+  // Auto-create session on first message if no session exists
+  const ensureSession = async () => {
+    if (currentSessionId || sessionInitialized) return currentSessionId;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login first');
+        return null;
+      }
+
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: {
+            name: "smart_new_chat",
+            arguments: { token }
+          },
+          id: 1
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        let sessionId = null;
+        
+        if (data?.result?.content?.[0]?.text) {
+          try {
+            const parsed = JSON.parse(data.result.content[0].text);
+            sessionId = parsed.session_id || parsed.id;
+          } catch (e) {
+            sessionId = data?.result?.session_id || data?.result?.id;
+          }
+        }
+        
+        if (sessionId) {
+          setCurrentSessionId(sessionId);
+          setSessionInitialized(true);
+          
+          // Add placeholder to chat sessions
+          setChatSessions(prev => [
+            {
+              id: sessionId,
+              title: "New Chat",
+              isPlaceholder: true,
+              created_at: new Date().toISOString(),
+              last_message: ""
+            },
+            ...prev
+          ]);
+          
+          return sessionId;
+        }
+      }
+    } catch (error) {
+      console.error('Error creating session:', error);
+    }
+    
+    return null;
   };
 
   async function handleSendQuery(raw, mode = 'simple') {
@@ -32,29 +97,31 @@ export function Conversation() {
     }
 
     setShowWelcome(false);
+    
+    // Ensure we have a session before sending
+    let sessionId = currentSessionId;
+    if (!sessionId) {
+      sessionId = await ensureSession();
+      if (!sessionId) {
+        alert('Failed to create chat session');
+        return;
+      }
+    }
+
     const userMsg = { id: Date.now(), sender: 'user', text };
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
     try {
-      const params = currentSessionId
-        ? {
-            name: "smart_send_message",
-            arguments: {
-              token,
-              session_id: currentSessionId,
-              message: text,
-              mode
-            }
-          }
-        : {
-            name: "smart_send_message",
-            arguments: {
-              token,
-              question: text,
-              mode
-            }
-          };
+      const params = {
+        name: "smart_send_message",
+        arguments: {
+          token,
+          session_id: sessionId,
+          message: text,
+          mode
+        }
+      };
 
       console.debug('Sending query with params:', params);
 
