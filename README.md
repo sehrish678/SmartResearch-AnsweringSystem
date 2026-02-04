@@ -34,8 +34,8 @@ The frontend enables users to interact with a **research-oriented answering syst
 
 The frontend is deployed using **Vercel** for fast and reliable delivery.
 
-🔗 **Live Application:** https://lnkd.in/d45QjvVn
-🔗 **Video Demonstration:** https://www.linkedin.com/posts/haniaarshad_fastapi-reactjs-agilescrum-activity-7417251279191592960-ZN7B?utm_source=share&utm_medium=member_desktop&rcm=ACoAAEaQiPMBZrv2NREqHpQqlYin1LZWCO5wFBU
+🔗 Live Application: https://lnkd.in/d45QjvVn
+🔗 Video Demonstration: https://www.linkedin.com/posts/haniaarshad_fastapi-reactjs-agilescrum-activity-7417251279191592960-ZN7B?utm_source=share&utm_medium=member_desktop&rcm=ACoAAEaQiPMBZrv2NREqHpQqlYin1LZWCO5wFBU
 ---
 
 ## 📂 Repository Purpose
